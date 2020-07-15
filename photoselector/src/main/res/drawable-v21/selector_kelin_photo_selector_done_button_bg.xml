@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?><!-- ripple 是5.0才出现的新标签-->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#3000"><!-- 点击出现的水波纹的颜色 -->
+    <item>
+        <selector>
+            <item android:state_enabled="true">
+                <shape android:shape="rectangle">
+                    <corners android:radius="5dp" />
+                    <solid android:color="?colorAccent" />
+                </shape>
+            </item>
+            <item android:state_enabled="false">
+                <shape android:shape="rectangle">
+                    <corners android:radius="5dp" />
+                    <solid android:color="#9F9F9F" />
+                </shape>
+            </item>
+        </selector>
+    </item>
+</ripple>

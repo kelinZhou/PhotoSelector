@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="MissingDefaultResource">
+    <paths>
+        <external-path
+            name="camera_photos"
+            path="" />
+
+        <root-path
+            name="root"
+            path="" />
+        <files-path
+            name="files"
+            path="" />
+
+        <cache-path
+            name="cache"
+            path="" />
+
+        <external-path
+            name="external"
+            path="" />
+        <external-path name="photos" path=""/>
+
+        <external-files-path name="opensdk_external" path="Images/tmp"/>
+        <root-path name="opensdk_root" path=""/>
+    </paths>
+</resources>

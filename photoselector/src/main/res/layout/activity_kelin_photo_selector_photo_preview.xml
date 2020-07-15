@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.viewpager.widget.ViewPager
+        android:id="@+id/vpKelinPhotoSelectorPager"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#D000"/>
+
+    <TextView
+        android:id="@+id/tvKelinPhotoSelectorIndicator"
+        android:layout_width="match_parent"
+        android:layout_height="?android:attr/actionBarSize"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="20dp"
+        tools:text="1/3"
+        android:gravity="center"/>
+
+    <ProgressBar
+        android:id="@+id/pbKelinPhotoSelectorProgress"
+        android:layout_width="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_height="wrap_content"/>
+</RelativeLayout>
