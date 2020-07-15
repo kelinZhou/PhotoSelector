@@ -16,3 +16,23 @@
 3.支持同时选择多张图片或多个视频(手动设置最大个数)。
 
 4.自动去重，自动回显已经选中了的图片或视频，防止选择相同的资源(需手动设置)。
+
+
+
+* * *
+### License
+```
+Copyright 2016 kelin410@163.com
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
