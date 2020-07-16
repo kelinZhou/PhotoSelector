@@ -128,8 +128,12 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
         LoaderManager.getInstance(this).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext) {
             albums = it
-            val defAlbum = it.find { a -> a.name == PreferenceManager.getDefaultSharedPreferences(applicationContext).getString("kelin_photo_selector_selected_album_name", "") } ?: it.first()
-            onAlbumSelected(defAlbum)
+            val defAlbum = it.find { a -> a.name == PreferenceManager.getDefaultSharedPreferences(applicationContext).getString("kelin_photo_selector_selected_album_name", "") } ?: it.firstOrNull()
+            if (defAlbum == null) {
+                Toast.makeText(this, "您的设备中没有任何${message}", Toast.LENGTH_SHORT).show()
+            } else {
+                onAlbumSelected(defAlbum)
+            }
         })
         tvKelinPhotoSelectorPageTitle.text = "选择$message"
         updateSelectedCount(0)
@@ -254,7 +258,6 @@ class PhotoSelectorActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: PhotoHolder, position: Int) {
             val item = getItem(position)
             holder.itemView.also { iv ->
-                //                iv.ivKelinPhotoSelectorPhotoView.setImageURI(picture.uri(iv.context))
                 val picture = item.picture
                 Glide.with(iv.context)
                     .load(picture.uri)

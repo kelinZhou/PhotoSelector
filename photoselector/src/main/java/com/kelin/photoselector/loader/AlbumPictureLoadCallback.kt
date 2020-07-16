@@ -3,6 +3,7 @@ package com.kelin.photoselector.loader
 import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
+import android.media.MediaMetadataRetriever
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -58,20 +59,32 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                 val path = cursor.getString(cursor.getColumnIndexOrThrow(FileColumns.DATA))
                 val name = cursor.getString(cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME))
                 val file = path.let { if (path.isNullOrEmpty()) null else File(path) }
-                if (file?.exists() == true) {
+                val size = cursor.getLong(cursor.getColumnIndexOrThrow(FileColumns.SIZE))
+                val duration = cursor.getLong(cursor.getColumnIndexOrThrow(FileColumns.DURATION)).let {
+                    if (it > 0) {
+                        it
+                    } else {//有些手机的有些视频可能从数据库查不到视频长度，如果长度是0则认为没有查到，那么就用下面的方式重新获取一次视频长度。
+                        MediaMetadataRetriever().let { m ->
+                            m.setDataSource(path)
+                            m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
+                        }
+                    }
+                }
+                val type = cursor.getInt(cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)).let {
+                    if (it == FileColumns.MEDIA_TYPE_VIDEO) {
+                        PictureType.VIDEO
+                    } else {
+                        PictureType.PHOTO
+                    }
+                }
+                if (file?.exists() == true && (type == PictureType.PHOTO || size >= 4096)) {
                     result.add(
                         PictureWrapper(
                             Picture(
                                 file.absolutePath,
-                                cursor.getLong(cursor.getColumnIndexOrThrow(FileColumns.SIZE)),
-                                cursor.getInt(cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)).let {
-                                    if (it == FileColumns.MEDIA_TYPE_VIDEO) {
-                                        PictureType.VIDEO
-                                    } else {
-                                        PictureType.PHOTO
-                                    }
-                                },
-                                formatDuration(cursor.getLong(cursor.getColumnIndexOrThrow(FileColumns.DURATION)))
+                                size,
+                                type,
+                                formatDuration(duration)
                             )
                         )
                     )
@@ -79,38 +92,49 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                     Log.d("PhotoSelector:", "照片或视频读取失败：path=$path, name=$name")
                 }
             } while (cursor.moveToNext())
-            onLoaded(result.groupBy { it.picture.parent }.mapTo(ArrayList()) {
-                val cover = it.value.first().picture
-                Album(
-                    PhotoSelector.transformAlbumName(cover.parentName),
-                    cover,
-                    it.value
-                )
-            }.apply {
-                val cover = result.first().picture
-                add(
-                    0,
-                    Album(
-                        "全部",
-                        cover,
-                        result,
-                        cover.rootDirName
-                    )
-                )
-            })
+            onLoaded(
+                if (result.isEmpty()) {
+                    emptyList()
+                } else {
+                    result.groupBy { it.picture.parent }.mapTo(ArrayList()) {
+                        val cover = it.value.first().picture
+                        Album(
+                            PhotoSelector.transformAlbumName(cover.parentName),
+                            cover,
+                            it.value
+                        )
+                    }.apply {
+                        val cover = result.first().picture
+                        add(
+                            0,
+                            Album(
+                                "全部",
+                                cover,
+                                result,
+                                cover.rootDirName
+                            )
+                        )
+                    }
+                }
+            )
         }
     }
 
     private fun formatDuration(duration: Long): String {
-        Log.d("=========duration:", duration.toString())
-        return if (duration <= 1000) {
-            ""
-        } else {
-            (duration / 1000).let { d ->
-                if (d > 3600) {
-                    "%02d:%02d:%02d".format(d / 3600, d / 60 % 60, d % 60)
-                } else {
-                    "%02d:%02d".format(d / 60 % 60, d % 60)
+        return when {
+            duration == 0L -> {
+                ""
+            }
+            duration < 1000 -> {
+                "00:01"
+            }
+            else -> {
+                (duration / 1000).let { d ->
+                    if (d > 3600) {
+                        "%02d:%02d:%02d".format(d / 3600, d / 60 % 60, d % 60)
+                    } else {
+                        "%02d:%02d".format(d / 60 % 60, d % 60)
+                    }
                 }
             }
         }
