@@ -60,22 +60,27 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                 val name = cursor.getString(cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME))
                 val file = path.let { if (path.isNullOrEmpty()) null else File(path) }
                 val size = cursor.getLong(cursor.getColumnIndexOrThrow(FileColumns.SIZE))
-                val duration = cursor.getLong(cursor.getColumnIndexOrThrow(FileColumns.DURATION)).let {
-                    if (it > 0) {
-                        it
-                    } else {//有些手机的有些视频可能从数据库查不到视频长度，如果长度是0则认为没有查到，那么就用下面的方式重新获取一次视频长度。
-                        MediaMetadataRetriever().let { m ->
-                            m.setDataSource(path)
-                            m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
-                        }
-                    }
-                }
                 val type = cursor.getInt(cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)).let {
                     if (it == FileColumns.MEDIA_TYPE_VIDEO) {
                         PictureType.VIDEO
                     } else {
                         PictureType.PHOTO
                     }
+                }
+                val isVideo = type == PictureType.VIDEO
+                val duration = if (isVideo) {
+                    cursor.getLong(cursor.getColumnIndexOrThrow(FileColumns.DURATION)).let {
+                        if (it > 0) {
+                            it
+                        } else {//有些手机的有些视频可能从数据库查不到视频长度，如果长度是0则认为没有查到，那么就用下面的方式重新获取一次视频长度。
+                            MediaMetadataRetriever().let { m ->
+                                m.setDataSource(path)
+                                m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
+                            }
+                        }
+                    }
+                } else {
+                    0
                 }
                 if (file?.exists() == true && (type == PictureType.PHOTO || size >= 4096)) {
                     result.add(
@@ -84,7 +89,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                                 file.absolutePath,
                                 size,
                                 type,
-                                formatDuration(duration)
+                                if (isVideo) formatDuration(duration) else ""
                             )
                         )
                     )
