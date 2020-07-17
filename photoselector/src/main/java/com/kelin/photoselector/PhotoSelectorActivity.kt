@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -125,6 +126,19 @@ class PhotoSelectorActivity : AppCompatActivity() {
         rvKelinPhotoSelectorPhotoListView.run {
             layoutManager = listLayoutManager
             adapter = listAdapter
+            addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                        tvKelinPhotoSelectorModifiedDate.visibility = View.VISIBLE
+                    } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                        tvKelinPhotoSelectorModifiedDate.visibility = View.GONE
+                    }
+                }
+
+                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                    tvKelinPhotoSelectorModifiedDate.text = listAdapter.getItem(listLayoutManager.findFirstVisibleItemPosition()).modifyDate
+                }
+            })
         }
         LoaderManager.getInstance(this).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext) {
             albums = it

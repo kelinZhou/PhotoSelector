@@ -30,7 +30,12 @@ internal data class Picture(
     /**
      * 如果是视频文件的话该字段将是视频文件的可播放时长。
      */
-    val duration: String = ""
+    val duration: String,
+
+    /**
+     * 最后修改时间。
+     */
+    val modifyDate: String
 ) : Photo {
 
     val rootDirName: String

@@ -16,6 +16,9 @@ import androidx.loader.content.Loader
 import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.model.*
 import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * **描述:** LoadCallback的具体实现，相册加载逻辑的具体处理。
@@ -27,6 +30,8 @@ import java.io.File
  * **版本:** v 1.0.0
  */
 internal class AlbumPictureLoadCallback(private val context: Context, private val onLoaded: (result: List<Album>) -> Unit) : LoaderManager.LoaderCallbacks<Cursor> {
+
+    private val dataFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.CHINA) }
 
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onCreateLoader(id: Int, args: Bundle?): Loader<Cursor> {
@@ -41,7 +46,8 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                 FileColumns.DATE_ADDED,
                 FileColumns.DURATION,
                 FileColumns.SIZE,
-                FileColumns.MIME_TYPE
+                FileColumns.MIME_TYPE,
+                FileColumns.DATE_MODIFIED
             ),
             " ${FileColumns.SIZE} > 0 AND ${AlbumType.typeOf(id).query}",
             null,
@@ -56,11 +62,11 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
             cursor.moveToFirst()
             val result = ArrayList<Picture>()
             do {
-                val path = cursor.getString(cursor.getColumnIndexOrThrow(FileColumns.DATA))
-                val name = cursor.getString(cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME))
+                val path = cursor.getString(cursor.getColumnIndex(FileColumns.DATA))
+                val name = cursor.getString(cursor.getColumnIndex(FileColumns.DISPLAY_NAME))
                 val file = path.let { if (path.isNullOrEmpty()) null else File(path) }
-                val size = cursor.getLong(cursor.getColumnIndexOrThrow(FileColumns.SIZE))
-                val type = cursor.getInt(cursor.getColumnIndexOrThrow(FileColumns.MEDIA_TYPE)).let {
+                val size = cursor.getLong(cursor.getColumnIndex(FileColumns.SIZE))
+                val type = cursor.getInt(cursor.getColumnIndex(FileColumns.MEDIA_TYPE)).let {
                     if (it == FileColumns.MEDIA_TYPE_VIDEO) {
                         PictureType.VIDEO
                     } else {
@@ -69,7 +75,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                 }
                 val isVideo = type == PictureType.VIDEO
                 val duration = if (isVideo) {
-                    cursor.getLong(cursor.getColumnIndexOrThrow(FileColumns.DURATION)).let {
+                    cursor.getLong(cursor.getColumnIndex(FileColumns.DURATION)).let {
                         if (it > 0) {
                             it
                         } else {//有些手机的有些视频可能从数据库查不到视频长度，如果长度是0则认为没有查到，那么就用下面的方式重新获取一次视频长度。
@@ -88,7 +94,8 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                             file.absolutePath,
                             size,
                             type,
-                            if (isVideo) formatDuration(duration) else ""
+                            if (isVideo) formatDuration(duration) else "",
+                            dataFormat.format(cursor.getLong(cursor.getColumnIndex(FileColumns.DATE_MODIFIED)) * 1000)
                         )
                     )
                 } else {

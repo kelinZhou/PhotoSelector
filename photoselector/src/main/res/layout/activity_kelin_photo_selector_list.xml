@@ -33,10 +33,10 @@
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentRight="true"
                 android:layout_centerVertical="true"
-                android:paddingStart="8dp"
-                android:paddingEnd="8dp"
                 android:gravity="center"
+                android:paddingStart="8dp"
                 android:paddingTop="6dp"
+                android:paddingEnd="8dp"
                 android:text="@string/kelin_photo_selector_reselect"
                 android:textColor="@android:color/white" />
 
@@ -57,13 +57,33 @@
         </RelativeLayout>
     </RelativeLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvKelinPhotoSelectorPhotoListView"
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:background="@android:color/black"
-        android:orientation="vertical" />
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvKelinPhotoSelectorPhotoListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@android:color/black"
+            android:orientation="vertical" />
+
+        <TextView
+            android:id="@+id/tvKelinPhotoSelectorModifiedDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#8000"
+            android:paddingStart="12dp"
+            android:paddingTop="1dp"
+            android:paddingEnd="12dp"
+            android:paddingBottom="1dp"
+            android:textColor="@android:color/white"
+            android:visibility="gone"
+            tools:ignore="SmallSp"
+            tools:text="2020-04-29"
+            tools:visibility="visible" />
+    </RelativeLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -111,11 +131,11 @@
             android:id="@+id/btnKelinPhotoSelectorDone"
             android:layout_width="0dp"
             android:layout_height="32dp"
-            android:textColor="@color/selector_kelin_photo_done_button_text"
-            android:background="@drawable/selector_kelin_photo_selector_done_button_bg"
             android:layout_marginEnd="12dp"
             android:layout_marginRight="12dp"
             android:layout_weight="1"
+            android:background="@drawable/selector_kelin_photo_selector_done_button_bg"
+            android:textColor="@color/selector_kelin_photo_done_button_text"
             tools:text="完成(1/9)" />
     </LinearLayout>
 </LinearLayout>
