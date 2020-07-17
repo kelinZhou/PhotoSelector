@@ -290,7 +290,11 @@ class PhotoSelectorActivity : AppCompatActivity() {
 
         fun clearSelected() {
             if (selectedPictures.isNotEmpty()) {
+                val targetPositions = selectedPictures.map { photoList!!.indexOf(it) }
                 selectedPictures.clear()
+                targetPositions.forEach {
+                    notifyItemChanged(it)
+                }
             }
         }
     }
