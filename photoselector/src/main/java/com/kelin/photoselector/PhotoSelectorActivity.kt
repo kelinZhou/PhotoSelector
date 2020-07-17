@@ -148,12 +148,10 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
         //预览选中图片
         tvKelinPhotoSelectorPreview.setOnClickListener {
-            PhotoSelector.openPicturePreviewPage(this, listAdapter.selectedPictures.map { it.picture })
+            PhotoSelector.openPicturePreviewPage(this, listAdapter.selectedPictures)
         }
         btnKelinPhotoSelectorDone.setOnClickListener {
-            listAdapter.selectedPictures.mapTo(ArrayList()) { it.picture }.also {
-                OkActivityResult.setResultData(this, it)
-            }
+            OkActivityResult.setResultData(this, listAdapter.selectedPictures)
         }
     }
 
@@ -188,7 +186,12 @@ class PhotoSelectorActivity : AppCompatActivity() {
         } else {
             View.INVISIBLE
         }
-        tvKelinPhotoSelectorPreview.visibility = visible
+        tvKelinPhotoSelectorPreview.apply {
+            visibility = visible
+            if (selectedCount > 0) {
+                text = "${getString(R.string.kelin_photo_selector_preview)}(${selectedCount})"
+            }
+        }
         tvKelinPhotoSelectorReselect.visibility = visible
         btnKelinPhotoSelectorDone.apply {
             text = "完成($selectedCount/$maxCount)"
@@ -212,20 +215,11 @@ class PhotoSelectorActivity : AppCompatActivity() {
 
     private inner class PhotoListAdapter : RecyclerView.Adapter<PhotoHolder>() {
 
-        private var photoList: List<PictureWrapper>? = null
+        private var photoList: List<Picture>? = null
 
-        internal val selectedPictures: MutableList<PictureWrapper> = ArrayList()
+        internal val selectedPictures: ArrayList<Picture> = ArrayList()
 
-        internal fun setPhotos(photos: List<PictureWrapper>, refresh: Boolean = true) {
-            if (selectedPictures.isNotEmpty()) {
-                photos.forEach {
-                    val s = selectedPictures.find { p -> p.picture.uri == it.picture.uri }
-                    if (s != null) {
-                        it.isSelected = true
-                        it.no = s.no
-                    }
-                }
-            }
+        internal fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
             photoList = photos
             refresh.isTrue { notifyDataSetChanged() }
         }
@@ -244,13 +238,13 @@ class PhotoSelectorActivity : AppCompatActivity() {
             return photoList?.size ?: 0
         }
 
-        internal fun notifyItemChanged(item: PictureWrapper) {
+        internal fun notifyItemChanged(item: Picture) {
             photoList?.run {
-                notifyItemChanged(indexOfFirst { it.picture.uri == item.picture.uri })
+                notifyItemChanged(indexOf(item))
             }
         }
 
-        internal fun getItem(position: Int): PictureWrapper {
+        internal fun getItem(position: Int): Picture {
             return photoList?.get(position)
                 ?: throw NullPointerException("The item must not be null!")
         }
@@ -258,19 +252,20 @@ class PhotoSelectorActivity : AppCompatActivity() {
         override fun onBindViewHolder(holder: PhotoHolder, position: Int) {
             val item = getItem(position)
             holder.itemView.also { iv ->
-                val picture = item.picture
                 Glide.with(iv.context)
-                    .load(picture.uri)
+                    .load(item.uri)
                     .apply(RequestOptions().centerCrop().placeholder(R.drawable.image_placeholder)).into(iv.ivKelinPhotoSelectorPhotoView)
-                iv.rlKelinPhotoSelectorChecker.isSelected = item.isSelected
-                iv.tvKelinPhotoSelectorChecker.text = if (item.isSelected) {
-                    item.no?.toString()
+                val no = selectedPictures.indexOf(item)
+                iv.rlKelinPhotoSelectorChecker.isSelected = no >= 0
+                iv.pmKelinPhotoSelectorPhotoViewMask.isSelected = no >= 0
+                iv.tvKelinPhotoSelectorChecker.text = if (no >= 0) {
+                    (no + 1).toString()
                 } else {
                     null
                 }
                 iv.tvKelinPhotoSelectorVideoDuration.apply {
-                    visibility = if (picture.type == PictureType.VIDEO) {
-                        text = picture.duration
+                    visibility = if (item.type == PictureType.VIDEO) {
+                        text = item.duration
                         View.VISIBLE
                     } else {
                         View.GONE
@@ -282,13 +277,6 @@ class PhotoSelectorActivity : AppCompatActivity() {
         fun clearSelected() {
             if (selectedPictures.isNotEmpty()) {
                 selectedPictures.clear()
-                photoList!!.forEachIndexed { i, p ->
-                    if (p.isSelected) {
-                        p.isSelected = false
-                        p.no = null
-                        notifyItemChanged(i)
-                    }
-                }
             }
         }
     }
@@ -297,46 +285,36 @@ class PhotoSelectorActivity : AppCompatActivity() {
         init {
             itemView.rlKelinPhotoSelectorChecker.setOnClickListener {
                 listAdapter.getItem(layoutPosition).apply {
-                    val s = !isSelected
-                    if (s && listAdapter.selectedPictures.size >= maxCount) {
+                    val selectedPictures = listAdapter.selectedPictures
+                    //如果被选中了的资源中没有当前的资源，那么就认为当前用户的目的是选中，否则就是取消选中。
+                    val isSelected = !selectedPictures.contains(this)
+                    if (isSelected && listAdapter.selectedPictures.size >= maxCount) {
                         Toast.makeText(applicationContext, "最多只能选择${maxCount}${if (albumType == AlbumType.PHOTO) "张" else "个"}$message", Toast.LENGTH_SHORT).show()
                     } else {
-                        val selectedPictures = listAdapter.selectedPictures
-                        no = if (s) {
+                        if (isSelected) {
                             selectedPictures.add(this)
-                            selectedPictures.size
                         } else {
-                            if (no!! < selectedPictures.size) {
-                                selectedPictures.forEach {
-                                    if (it.no ?: 0 > no!!) {
-                                        it.no = it.no!! - 1
-                                        listAdapter.notifyItemChanged(it)
+                            //取消选中时判断是否是取消的最后一个，如果不是的话那还要刷新其他的条目变更序号。
+                            val isLast = this == selectedPictures.lastOrNull()
+                            //获取当前取消的是第几个，一定要在当前资源没有从选中池里面已出的时候获取，否则永远是-1。
+                            val currentIndex = selectedPictures.indexOf(this)
+                            selectedPictures.remove(this)
+                            if (!isLast) {
+                                selectedPictures.forEachIndexed { i, p ->
+                                    if (i >= currentIndex) {
+                                        listAdapter.notifyItemChanged(p)
                                     }
                                 }
                             }
-                            selectedPictures.removeFirst { it.picture.uri == picture.uri }
-                            null
                         }
-                        isSelected = s//这一句必须放到后面
                         listAdapter.notifyItemChanged(layoutPosition)
                         updateSelectedCount(listAdapter.selectedPictures.size)
                     }
                 }
             }
             itemView.setOnClickListener {
-                PhotoSelector.openPicturePreviewPage(this@PhotoSelectorActivity, listOf(listAdapter.getItem(layoutPosition).picture))
+                PhotoSelector.openPicturePreviewPage(this@PhotoSelectorActivity, listOf(listAdapter.getItem(layoutPosition)))
             }
         }
     }
-}
-
-internal fun <E> MutableIterable<E>.removeFirst(filter: (e: E) -> Boolean): Boolean {
-    val ech = iterator()
-    while (ech.hasNext()) {
-        if (filter(ech.next())) {
-            ech.remove()
-            return true
-        }
-    }
-    return false
 }

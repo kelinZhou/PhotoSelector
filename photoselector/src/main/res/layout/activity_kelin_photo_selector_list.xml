@@ -37,7 +37,7 @@
                 android:paddingEnd="8dp"
                 android:gravity="center"
                 android:paddingTop="6dp"
-                android:text="@string/reselect"
+                android:text="@string/kelin_photo_selector_reselect"
                 android:textColor="@android:color/white" />
 
             <TextView
@@ -104,7 +104,7 @@
             android:layout_height="match_parent"
             android:layout_weight="2"
             android:gravity="center"
-            android:text="@string/preview"
+            android:text="@string/kelin_photo_selector_preview"
             android:textColor="@android:color/white" />
 
         <Button

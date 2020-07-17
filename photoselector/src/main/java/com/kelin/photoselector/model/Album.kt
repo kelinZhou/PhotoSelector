@@ -23,7 +23,7 @@ internal data class Album(
     /**
      * 该相册内所有的图片或视频。
      */
-    val pictures: List<PictureWrapper>,
+    val pictures: List<Picture>,
     /**
      * 相册的路径。
      */

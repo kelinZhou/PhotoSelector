@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <com.wingsofts.dragphotoview.DragPhotoView
+    <uk.co.senab.photoview.PhotoView
         android:id="@+id/ivKelinPhotoSelectorPhotoView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />

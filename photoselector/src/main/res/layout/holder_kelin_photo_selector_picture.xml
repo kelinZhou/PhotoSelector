@@ -11,9 +11,10 @@
         android:layout_height="match_parent" />
 
     <com.kelin.photoselector.ui.PhotoMask
+        android:id="@+id/pmKelinPhotoSelectorPhotoViewMask"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#10000000" />
+        android:background="@drawable/selector_kelin_photo_selector_photo_mask" />
 
     <RelativeLayout
         android:id="@+id/rlKelinPhotoSelectorChecker"

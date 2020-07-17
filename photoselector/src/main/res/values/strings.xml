@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="preview">预览</string>
-    <string name="reselect">重选</string>
+    <string name="kelin_photo_selector_preview">预览</string>
+    <string name="kelin_photo_selector_reselect">重选</string>
 </resources>

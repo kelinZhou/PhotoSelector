@@ -1,6 +1,7 @@
 package com.kelin.photoselector
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.Drawable
@@ -14,6 +15,7 @@ import android.view.ViewGroup
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityOptionsCompat
 import androidx.viewpager.widget.PagerAdapter
 import androidx.viewpager.widget.ViewPager
 import com.bumptech.glide.Glide
@@ -99,10 +101,10 @@ class PhotoPreviewActivity : AppCompatActivity() {
                         .addListener(getLoadListener(index))
                         .transition(DrawableTransitionOptions.withCrossFade())
                         .into(this)
-                    setOnTapListener { finish() }
-                    setOnExitListener { _, _, _, _, _ ->
-                        finish()
-                    }
+//                    setOnTapListener { finish() }
+//                    setOnExitListener { _, _, _, _, _ ->
+//                        finish()
+//                    }
                 }
                 //设置播放视频控件点击之后调用系统的播放视频功能播放视频。
                 pageView.ivKelinPhotoSelectorPlayVideo.setOnClickListener {

@@ -67,4 +67,17 @@ internal data class Picture(
     } else {
         Uri.fromFile(File(path))
     }
+
+
+    override fun equals(other: Any?): Boolean {
+        return other != null && other is Photo && other.uri == uri
+    }
+
+    override fun hashCode(): Int {
+        var result = path.hashCode()
+        result = 31 * result + size.hashCode()
+        result = 31 * result + type.hashCode()
+        result = 31 * result + duration.hashCode()
+        return result
+    }
 }

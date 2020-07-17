@@ -54,7 +54,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
         if (cursor != null && cursor.count > 0) {
             cursor.moveToFirst()
-            val result = ArrayList<PictureWrapper>()
+            val result = ArrayList<Picture>()
             do {
                 val path = cursor.getString(cursor.getColumnIndexOrThrow(FileColumns.DATA))
                 val name = cursor.getString(cursor.getColumnIndexOrThrow(FileColumns.DISPLAY_NAME))
@@ -84,13 +84,11 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                 }
                 if (file?.exists() == true && (type == PictureType.PHOTO || size >= 4096)) {
                     result.add(
-                        PictureWrapper(
-                            Picture(
-                                file.absolutePath,
-                                size,
-                                type,
-                                if (isVideo) formatDuration(duration) else ""
-                            )
+                        Picture(
+                            file.absolutePath,
+                            size,
+                            type,
+                            if (isVideo) formatDuration(duration) else ""
                         )
                     )
                 } else {
@@ -101,15 +99,15 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                 if (result.isEmpty()) {
                     emptyList()
                 } else {
-                    result.groupBy { it.picture.parent }.mapTo(ArrayList()) {
-                        val cover = it.value.first().picture
+                    result.groupBy { it.parent }.mapTo(ArrayList()) {
+                        val cover = it.value.first()
                         Album(
                             PhotoSelector.transformAlbumName(cover.parentName),
                             cover,
                             it.value
                         )
                     }.apply {
-                        val cover = result.first().picture
+                        val cover = result.first()
                         add(
                             0,
                             Album(
