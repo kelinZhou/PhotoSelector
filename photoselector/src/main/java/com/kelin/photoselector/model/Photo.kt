@@ -28,4 +28,10 @@ interface Photo : Serializable {
      * @return 返回有效的Uri，可以返回空，如果返回空将使用url加载视频，建议在7.0及以上的系统中使用FileProvider。
      */
     fun getUri(context: Context): Uri?
+
+    /**
+     * 判断是否是本地文件。
+     */
+    val isLocalFile: Boolean
+        get() = !uri.startsWith("http", true)
 }

@@ -233,6 +233,9 @@ class PhotoSelectorActivity : AppCompatActivity() {
 
         internal val selectedPictures: ArrayList<Picture> = ArrayList()
 
+        internal val dataList: List<Picture>
+            get() = photoList ?: emptyList()
+
         internal fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
             photoList = photos
             refresh.isTrue { notifyDataSetChanged() }
