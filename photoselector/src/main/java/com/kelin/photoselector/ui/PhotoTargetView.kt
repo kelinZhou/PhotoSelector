@@ -67,23 +67,19 @@ class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: Attribu
     inner class PhotoTarget(private val target: PhotoTargetView) : CustomViewTarget<PhotoTargetView, Drawable>(target) {
         override fun onLoadFailed(errorDrawable: Drawable?) {
             target.progressBar.visibility = View.GONE
-            if (errorDrawable != null) {
-                target.imageView.visibility = View.GONE
-                target.defImageView.apply {
-                    setImageDrawable(errorDrawable)
-                    visibility = View.VISIBLE
-                }
+            target.imageView.visibility = View.GONE
+            target.defImageView.apply {
+                setImageDrawable(errorDrawable)
+                visibility = View.VISIBLE
             }
         }
 
         override fun onResourceCleared(placeholder: Drawable?) {
             target.progressBar.visibility = View.VISIBLE
-            if (placeholder != null) {
-                target.imageView.visibility = View.GONE
-                target.defImageView.apply {
-                    setImageDrawable(placeholder)
-                    visibility = View.VISIBLE
-                }
+            target.imageView.visibility = View.GONE
+            target.defImageView.apply {
+                setImageDrawable(placeholder)
+                visibility = View.VISIBLE
             }
         }
 

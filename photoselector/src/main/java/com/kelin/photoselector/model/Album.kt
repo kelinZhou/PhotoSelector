@@ -1,7 +1,5 @@
 package com.kelin.photoselector.model
 
-import android.annotation.SuppressLint
-
 /**
  * **描述:** 相册
  *

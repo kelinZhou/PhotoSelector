@@ -3,6 +3,8 @@ package com.kelin.photoselector.model
 import android.content.Context
 import android.net.Uri
 import android.os.Build
+import android.os.Parcel
+import android.os.Parcelable
 import java.io.File
 
 /**
@@ -36,7 +38,7 @@ internal data class Picture(
      * 最后修改时间。
      */
     val modifyDate: String
-) : Photo {
+) : Photo, Parcelable {
 
     val rootDirName: String
         get() = "/${path.split("/").let { if (it.size > 1) it[1] else "storage" }}/"
@@ -67,12 +69,19 @@ internal data class Picture(
     override val isVideo: Boolean
         get() = type == PictureType.VIDEO
 
+    internal constructor(parcel: Parcel) : this(
+        parcel.readString() ?: "",
+        parcel.readLong(),
+        parcel.readParcelable(PictureType::class.java.classLoader) ?: PictureType.PHOTO,
+        parcel.readString() ?: "",
+        parcel.readString() ?: ""
+    )
+
     override fun getUri(context: Context): Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
         Uri.parse(path)
     } else {
         Uri.fromFile(File(path))
     }
-
 
     override fun equals(other: Any?): Boolean {
         return other != null && other is Photo && other.uri == uri
@@ -84,5 +93,27 @@ internal data class Picture(
         result = 31 * result + type.hashCode()
         result = 31 * result + duration.hashCode()
         return result
+    }
+
+    override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(path)
+        parcel.writeLong(size)
+        parcel.writeParcelable(type, flags)
+        parcel.writeString(duration)
+        parcel.writeString(modifyDate)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : Parcelable.Creator<Picture> {
+        override fun createFromParcel(parcel: Parcel): Picture {
+            return Picture(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Picture?> {
+            return arrayOfNulls(size)
+        }
     }
 }

@@ -3,12 +3,7 @@ package com.kelin.photoselector
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.graphics.drawable.Drawable
-import android.media.ExifInterface
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -24,13 +19,10 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
-import com.davemorrissey.labs.subscaleview.ImageSource
 import com.kelin.photoselector.model.Photo
-import com.kelin.photoselector.ui.PhotoTargetView
+import com.kelin.photoselector.model.Picture
 import kotlinx.android.synthetic.main.activity_kelin_photo_selector_photo_preview.*
 import kotlinx.android.synthetic.main.view_kelin_photo_selector_photo_view.view.*
-import java.io.File
-import java.io.IOException
 
 /**
  * **描述:** 图片和视频预览页面。
@@ -46,12 +38,18 @@ class PhotoPreviewActivity : AppCompatActivity() {
     companion object {
 
         private const val KEY_PHOTO_URLS_DATA = "key_photo_urls_data"
+        private const val KEY_PICTURE_URLS_DATA = "key_picture_urls_data"
         private const val KEY_SELECTED_POSITION = "key_selected_position"
 
 
+        @Suppress("unchecked_cast")
         internal fun start(context: Context, list: List<Photo>, position: Int = 0) {
             context.startActivity(Intent(context, PhotoPreviewActivity::class.java).apply {
-                putExtra(KEY_PHOTO_URLS_DATA, list.let { if (it is ArrayList) it else ArrayList(it) })
+                if (list.first() is Picture) {  //有限使用Parsable可以提高效率。
+                    putParcelableArrayListExtra(KEY_PICTURE_URLS_DATA, (list as List<Picture>).let { if (it is ArrayList) it else ArrayList(it) })
+                } else {
+                    putExtra(KEY_PHOTO_URLS_DATA, list.let { if (it is ArrayList) it else ArrayList(it) })
+                }
                 putExtra(KEY_SELECTED_POSITION, position)
             })
         }
@@ -59,7 +57,7 @@ class PhotoPreviewActivity : AppCompatActivity() {
 
     @Suppress("unchecked_cast")
     private val photos by lazy {
-        intent.getSerializableExtra(KEY_PHOTO_URLS_DATA).let {
+        intent.getParcelableArrayListExtra<Picture>(KEY_PICTURE_URLS_DATA) ?: intent.getSerializableExtra(KEY_PHOTO_URLS_DATA).let {
             (it as? ArrayList<Photo>) ?: throw IllegalArgumentException("Photos must not be null!")
         }
     }
@@ -88,6 +86,7 @@ class PhotoPreviewActivity : AppCompatActivity() {
         tvKelinPhotoSelectorIndicator.text = "${p + 1}/${photos.size}"
         //初始化ViewPager以及所有子View。
         vpKelinPhotoSelectorPager.run {
+            offscreenPageLimit = 3  //设置预加载3页，即左边、当前、右边，这样在滑动时更加流畅，基本看不到loading。
             //为ViewPager设置页面切换监听
             registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
                 override fun onPageSelected(position: Int) {
