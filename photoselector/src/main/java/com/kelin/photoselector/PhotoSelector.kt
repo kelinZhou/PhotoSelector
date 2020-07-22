@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleOwner
+import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.model.AlbumNameTransformer
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.NameTransformer
@@ -41,22 +44,41 @@ object PhotoSelector {
     /**
      * 打开图片选择页面。页面启动后只能选择图片文件。
      */
-    fun openPhotoSelector(context: Context, maxCount: Int = 9, result: (photos: List<Photo>) -> Unit) {
-        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO, maxCount, result)
+    fun openPhotoSelector(fragment: Fragment, maxCount: Int = 9, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+        val activity = fragment.activity
+        if (activity != null) {
+            if (id != -1) {
+                fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
+            }
+            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.PHOTO, maxCount, id, result)
+        }
+    }
+
+    /**
+     * 打开图片选择页面。页面启动后只能选择图片文件。
+     */
+    fun openPhotoSelector(context: Context, maxCount: Int = 9, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
+        if (id != -1 && context is LifecycleOwner) {
+            context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
+        }
+        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO, maxCount, id, result)
     }
 
     /**
      * 打开视频选择页面。页面启动后只能选择视频文件。
      */
-    fun openVideoSelector(context: Context, maxCount: Int = 9, result: (photos: List<Photo>) -> Unit) {
-        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.VIDEO, maxCount, result)
+    fun openVideoSelector(context: Context, maxCount: Int = 9, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
+        if (id != -1 && context is LifecycleOwner) {
+            context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
+        }
+        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.VIDEO, maxCount, id, result)
     }
 
     /**
      * 打开图片和视频的选择页面。页面启动后即能选择图片文件也能选择视频文件。
      */
-    fun openPictureSelector(context: Context, maxCount: Int = 9, result: (photos: List<Photo>) -> Unit) {
-        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO_VIDEO, maxCount, result)
+    fun openPictureSelector(context: Context, maxCount: Int = 9, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
+        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO_VIDEO, maxCount, id, result)
     }
 
     /**
@@ -83,12 +105,4 @@ object PhotoSelector {
             )
         })
     }
-}
-
-fun Boolean.isTrue(business: () -> Unit) {
-    if (this) business()
-}
-
-fun Boolean.isFalse(business: () -> Unit) {
-    if (!this) business()
 }

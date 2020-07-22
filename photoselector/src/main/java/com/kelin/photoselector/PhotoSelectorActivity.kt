@@ -21,6 +21,7 @@ import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.kelin.okpermission.OkActivityResult
 import com.kelin.okpermission.OkPermission
+import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.loader.AlbumPictureLoadCallback
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
@@ -44,8 +45,9 @@ class PhotoSelectorActivity : AppCompatActivity() {
 
         private const val KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE = "key_kelin_photo_selector_album_type"
         private const val KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT = "key_kelin_photo_selector_max_count"
+        private const val KEY_KELIN_PHOTO_SELECTOR_ID = "key_kelin_photo_selector_id"
 
-        internal fun startPictureSelectorPage(context: Context, albumType: AlbumType, maxCount: Int, result: (photos: List<Photo>) -> Unit) {
+        internal fun startPictureSelectorPage(context: Context, albumType: AlbumType, maxCount: Int, id: Int, result: (photos: List<Photo>) -> Unit) {
             OkPermission.with(context)
                 .addDefaultPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .checkAndApply { granted, permissions ->
@@ -53,6 +55,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
                         OkActivityResult.startActivity<List<Photo>>(
                             context as Activity,
                             Intent(context, PhotoSelectorActivity::class.java).apply {
+                                putExtra(KEY_KELIN_PHOTO_SELECTOR_ID, id)
                                 putExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, albumType.type)
                                 putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxCount)
                             }) { resultCode, data ->
@@ -66,6 +69,8 @@ class PhotoSelectorActivity : AppCompatActivity() {
                 }
         }
     }
+
+    private val id by lazy { intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_ID, -1) }
 
     private var currentAlbumName: String = ""
 
@@ -83,7 +88,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
 
     private val maxCount by lazy { intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, 9) }
 
-    private val listAdapter by lazy { PhotoListAdapter() }
+    private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(id)) }
 
     private val listLayoutManager by lazy {
         object : GridLayoutManager(this@PhotoSelectorActivity, getSpanCount(resources.configuration)) {
@@ -122,6 +127,10 @@ class PhotoSelectorActivity : AppCompatActivity() {
             //透明状态栏
             window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS or WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         }
+
+        tvKelinPhotoSelectorPageTitle.text = "选择$message"
+        updateSelectedCount(0)
+
         rvKelinPhotoSelectorPhotoListView.run {
             layoutManager = listLayoutManager
             adapter = listAdapter
@@ -148,8 +157,6 @@ class PhotoSelectorActivity : AppCompatActivity() {
                 onAlbumSelected(defAlbum)
             }
         })
-        tvKelinPhotoSelectorPageTitle.text = "选择$message"
-        updateSelectedCount(0)
         //关闭当前页面
         ivKelinPhotoSelectorFinish.setOnClickListener { finish() }
         //变更相册
@@ -163,8 +170,12 @@ class PhotoSelectorActivity : AppCompatActivity() {
         tvKelinPhotoSelectorPreview.setOnClickListener {
             PhotoSelector.openPicturePreviewPage(this, listAdapter.selectedPictures)
         }
+        //用户点击完成按钮。
         btnKelinPhotoSelectorDone.setOnClickListener {
-            OkActivityResult.setResultData(this, listAdapter.selectedPictures)
+            listAdapter.selectedPictures.also {
+                DistinctManager.instance.saveSelected(id, it)
+                OkActivityResult.setResultData(this, it)
+            }
         }
     }
 
@@ -226,18 +237,26 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
     }
 
-    private inner class PhotoListAdapter : RecyclerView.Adapter<PhotoHolder>() {
+    private inner class PhotoListAdapter(initialSelected: List<Picture>?) : RecyclerView.Adapter<PhotoHolder>() {
+
+        init {
+            if (!initialSelected.isNullOrEmpty()) {
+                updateSelectedCount(initialSelected.size)
+            }
+        }
 
         private var photoList: List<Picture>? = null
 
-        internal val selectedPictures: ArrayList<Picture> = ArrayList()
+        internal val selectedPictures: ArrayList<Picture> = initialSelected?.let { if (it is ArrayList) it else ArrayList(it) } ?: ArrayList()
 
         internal val dataList: List<Picture>
             get() = photoList ?: emptyList()
 
         internal fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
             photoList = photos
-            refresh.isTrue { notifyDataSetChanged() }
+            if (refresh) {
+                notifyDataSetChanged()
+            }
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoHolder {
