@@ -31,16 +31,4 @@ open class PhotoImpl(
      */
     override val isVideo: Boolean
         get() = video ?: Pattern.compile("(3gp|mp4|flv|avi|rm|rmvb|wmv)").matcher(uri).find()
-
-    /**
-     * 图片或视频的Uri，可以是本地的也可以是网络上的。
-     * @return 返回有效的Uri，可以返回空，如果返回空将使用url加载视频，建议在7.0及以上的系统中使用FileProvider。
-     */
-    override fun getUri(context: Context): Uri? {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Uri.parse(uri)
-        } else {
-            Uri.fromFile(File(uri))
-        }
-    }
 }

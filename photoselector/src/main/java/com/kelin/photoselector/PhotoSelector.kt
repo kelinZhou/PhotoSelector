@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.webkit.MimeTypeMap
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.kelin.photoselector.cache.DistinctManager
@@ -172,7 +173,8 @@ object PhotoSelector {
                 Uri.parse(photo.uri)
             } else {
                 Uri.fromFile(File(photo.uri))
-            }
+            },
+            MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(photo.uri)) ?: "video/*"
         )
     }
 
@@ -181,11 +183,11 @@ object PhotoSelector {
      * @param context 需要Activity的Context。
      * @param uri 视频文件的uri地址。
      */
-    fun playVideoWithSystem(context: Context, uri: Uri) {
+    fun playVideoWithSystem(context: Context, uri: Uri, type: String = "video/*") {
         context.startActivity(Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(
                 uri,
-                "video/*"
+                type
             )
         })
     }

@@ -77,12 +77,6 @@ internal data class Picture(
         parcel.readString() ?: ""
     )
 
-    override fun getUri(context: Context): Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        Uri.parse(path)
-    } else {
-        Uri.fromFile(File(path))
-    }
-
     override fun equals(other: Any?): Boolean {
         return other != null && other is Photo && other.uri == uri
     }
