@@ -119,13 +119,15 @@ class PhotoSelectorActivity : AppCompatActivity() {
         setContentView(R.layout.activity_kelin_photo_selector_list)
         rlKelinPhotoSelectorToolbar.setPadding(0, getStatusBarOffsetPx(), 0, 0)
         supportActionBar?.hide()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-            window.attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-        }
-        //当系统版本为4.4或者4.4以上时可以使用沉浸式状态栏
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            //透明状态栏
-            window.addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS or WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
+        window.apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
+            }
+            //当系统版本为4.4或者4.4以上时可以使用沉浸式状态栏
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                //透明状态栏
+                addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
+            }
         }
 
         tvKelinPhotoSelectorPageTitle.text = "选择$message"
