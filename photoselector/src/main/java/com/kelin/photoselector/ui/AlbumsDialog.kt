@@ -64,7 +64,7 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
         if (window != null) {
             window.attributes = window.attributes.apply {
                 width = WindowManager.LayoutParams.MATCH_PARENT
-                height = (context.resources.displayMetrics.heightPixels * 0.6).toInt()
+                height = WindowManager.LayoutParams.WRAP_CONTENT
                 gravity = Gravity.BOTTOM
             }
         }
