@@ -1,9 +1,5 @@
 package com.kelin.photoselector.model
 
-import android.content.Context
-import android.net.Uri
-import android.os.Build
-import java.io.File
 import java.util.regex.Pattern
 
 /**

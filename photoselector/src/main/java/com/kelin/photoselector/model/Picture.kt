@@ -1,8 +1,5 @@
 package com.kelin.photoselector.model
 
-import android.content.Context
-import android.net.Uri
-import android.os.Build
 import android.os.Parcel
 import android.os.Parcelable
 import java.io.File
