@@ -1,12 +1,20 @@
 package com.kelin.photoselector
 
+import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
+import android.os.Environment
+import android.provider.MediaStore
 import android.webkit.MimeTypeMap
+import androidx.core.content.FileProvider
+import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
+import com.kelin.okpermission.OkActivityResult
+import com.kelin.okpermission.OkPermission
 import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.model.AlbumNameTransformer
 import com.kelin.photoselector.model.AlbumType
@@ -25,10 +33,26 @@ import java.io.File
  */
 object PhotoSelector {
 
+    private const val TEMP_IMAGE_FILE_NAME = "kelin_photo_selector_take_photo_temp_image.jpg"
+    private const val TEMP_VIDEO_FILE_NAME = "kelin_photo_selector_take_photo_temp_video.mp4"
+
     /**
      * 相册命名改变器。
      */
     private var albumNameTransformer: NameTransformer = AlbumNameTransformer()
+
+    private var fileProvider: String? = null
+
+    internal val requireFileProvider:String
+        get() = fileProvider ?: throw NullPointerException("You need call the init method first to set fileProvider.")
+
+    /**
+     * 初始化。
+     * @param provider 用于适配在7.0及以上Android版本的文件服务。
+     */
+    fun init(provider: String) {
+        fileProvider = provider
+    }
 
     /**
      * 注册相册命名改变器。注册之后将会使用您自定义的改变器改变规则为相册命名。
@@ -43,6 +67,54 @@ object PhotoSelector {
      */
     internal fun transformAlbumName(name: String): String {
         return albumNameTransformer.transform(name)
+    }
+
+    /**
+     * 拍摄照片。
+     * @param activity 需要当前的Activity实例。
+     * @param targetFile 拍摄的照片要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
+     * @param onResult 拍摄完成的回调，会将照片文件回调给您。
+     */
+    fun takePhoto(activity: Activity, targetFile: File? = null, onResult: (photo: File) -> Unit) {
+        OkPermission.with(activity)
+            .addDefaultPermissions(Manifest.permission.CAMERA)
+            .checkAndApply { granted, _ ->
+                if (granted) {
+                    takePicture(activity, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES), TEMP_IMAGE_FILE_NAME), onResult)
+                }
+            }
+    }
+
+    /**
+     * 拍摄视频。
+     * @param activity 需要当前的Activity实例。
+     * @param targetFile 拍摄的视频要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
+     * @param onResult 拍摄完成的回调，会将视频文件回调给您。
+     */
+    fun takeVideo(activity: Activity, targetFile: File? = null, onResult: (photo: File) -> Unit) {
+        OkPermission.with(activity)
+            .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+            .checkAndApply { granted, _ ->
+                if (granted) {
+                    takePicture(activity, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES), TEMP_VIDEO_FILE_NAME), onResult)
+                }
+            }
+    }
+
+    private fun takePicture(activity: Activity, action:String, targetFile: File, onResult: (photo: File) -> Unit) {
+        val intent = Intent(action)
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+        if (targetFile.exists()) {
+            targetFile.delete()
+        }
+        val uri = targetFile.toUri(activity, requireFileProvider)
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
+        OkActivityResult.startActivity(activity, intent) { resultCode ->
+            if (resultCode == Activity.RESULT_OK) {
+                onResult(targetFile)
+            }
+        }
     }
 
     /**
@@ -190,5 +262,13 @@ object PhotoSelector {
                 type
             )
         })
+    }
+}
+
+fun File.toUri(context: Context, provider: String = "${context.packageName}.fileProvider"): Uri {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+        FileProvider.getUriForFile(context, provider, this)
+    } else {
+        Uri.fromFile(this)
     }
 }

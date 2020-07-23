@@ -3,6 +3,7 @@ package com.kelin.photoselectordemo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Toast
+import androidx.core.net.toFile
 import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.model.PhotoImpl
 import kotlinx.android.synthetic.main.activity_main.*
@@ -12,6 +13,18 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        btnTakePhoto.setOnClickListener {
+            PhotoSelector.takePhoto(this){
+                PhotoSelector.openPicturePreviewPage(this, listOf(PhotoImpl(it.absolutePath)))
+            }
+        }
+
+        btnTakeVideo.setOnClickListener {
+            PhotoSelector.takeVideo(this){
+                PhotoSelector.openPicturePreviewPage(this, listOf(PhotoImpl(it.absolutePath)))
+            }
+        }
 
         btnPhotoSelect.setOnClickListener {
             PhotoSelector.openPhotoSelector(this) { photos ->
