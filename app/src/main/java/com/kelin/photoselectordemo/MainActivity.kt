@@ -16,13 +16,21 @@ class MainActivity : AppCompatActivity() {
 
         btnTakePhoto.setOnClickListener {
             PhotoSelector.takePhoto(this){
-                PhotoSelector.openPicturePreviewPage(this, listOf(PhotoImpl(it.absolutePath)))
+                if (it != null) {
+                    PhotoSelector.openPicturePreviewPage(this, listOf(PhotoImpl(it.absolutePath)))
+                } else {
+                    Toast.makeText(applicationContext, "拍照失败", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
         btnTakeVideo.setOnClickListener {
             PhotoSelector.takeVideo(this){
-                PhotoSelector.openPicturePreviewPage(this, listOf(PhotoImpl(it.absolutePath)))
+                if (it != null) {
+                    PhotoSelector.openPicturePreviewPage(this, listOf(PhotoImpl(it.absolutePath)))
+                } else {
+                    Toast.makeText(applicationContext, "录像失败", Toast.LENGTH_SHORT).show()
+                }
             }
         }
 

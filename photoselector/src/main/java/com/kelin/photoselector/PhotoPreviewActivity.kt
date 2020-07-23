@@ -112,7 +112,11 @@ class PhotoPreviewActivity : AppCompatActivity() {
                 val photo = photos[position]
                 Glide.with(iv.context)
                     .load(photo.uri)
-                    .apply { RequestOptions.centerCropTransform().placeholder(R.drawable.kelin_photo_selector_img_load_error) }
+                    .apply(
+                        RequestOptions
+                            .centerCropTransform()
+                            .error(R.drawable.kelin_photo_selector_img_load_error)
+                    )
                     .addListener(object : RequestListener<Drawable> {
                         override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?, isFirstResource: Boolean): Boolean {
                             return false

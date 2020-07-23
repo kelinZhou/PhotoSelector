@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -21,6 +22,7 @@ import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.NameTransformer
 import com.kelin.photoselector.model.Photo
 import java.io.File
+import java.lang.Exception
 
 /**
  * **描述:** 图片选择器核心类。
@@ -33,8 +35,7 @@ import java.io.File
  */
 object PhotoSelector {
 
-    private const val TEMP_IMAGE_FILE_NAME = "kelin_photo_selector_take_photo_temp_image.jpg"
-    private const val TEMP_VIDEO_FILE_NAME = "kelin_photo_selector_take_photo_temp_video.mp4"
+    internal const val DEFAULT_PICTURE_DIR = "photoSelector"
 
     /**
      * 相册命名改变器。
@@ -43,15 +44,28 @@ object PhotoSelector {
 
     private var fileProvider: String? = null
 
-    internal val requireFileProvider:String
+    /**
+     * 拍照和录像时的视频或图片的存储路径。
+     */
+    private var pictureDir: String = DEFAULT_PICTURE_DIR
+
+    internal val requireFileProvider: String
         get() = fileProvider ?: throw NullPointerException("You need call the init method first to set fileProvider.")
 
     /**
      * 初始化。
      * @param provider 用于适配在7.0及以上Android版本的文件服务。
      */
-    fun init(provider: String) {
+    fun init(context: Context, provider: String) {
         fileProvider = provider
+        pictureDir = context.packageName.let {
+            val index = it.lastIndexOf(".")
+            if (index >= 0 && index < it.length) {
+                it.substring(index + 1)
+            } else {
+                DEFAULT_PICTURE_DIR
+            }
+        }
     }
 
     /**
@@ -75,12 +89,12 @@ object PhotoSelector {
      * @param targetFile 拍摄的照片要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
      * @param onResult 拍摄完成的回调，会将照片文件回调给您。
      */
-    fun takePhoto(activity: Activity, targetFile: File? = null, onResult: (photo: File) -> Unit) {
+    fun takePhoto(activity: Activity, targetFile: File? = null, onResult: (photo: File?) -> Unit) {
         OkPermission.with(activity)
-            .addDefaultPermissions(Manifest.permission.CAMERA)
+            .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
             .checkAndApply { granted, _ ->
                 if (granted) {
-                    takePicture(activity, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES), TEMP_IMAGE_FILE_NAME), onResult)
+                    takePicture(activity, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
                 }
             }
     }
@@ -91,28 +105,33 @@ object PhotoSelector {
      * @param targetFile 拍摄的视频要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
      * @param onResult 拍摄完成的回调，会将视频文件回调给您。
      */
-    fun takeVideo(activity: Activity, targetFile: File? = null, onResult: (photo: File) -> Unit) {
+    fun takeVideo(activity: Activity, targetFile: File? = null, onResult: (photo: File?) -> Unit) {
         OkPermission.with(activity)
-            .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO)
+            .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
             .checkAndApply { granted, _ ->
                 if (granted) {
-                    takePicture(activity, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File(activity.getExternalFilesDir(Environment.DIRECTORY_PICTURES), TEMP_VIDEO_FILE_NAME), onResult)
+                    takePicture(activity, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
                 }
             }
     }
 
-    private fun takePicture(activity: Activity, action:String, targetFile: File, onResult: (photo: File) -> Unit) {
+    private fun takePicture(activity: Activity, action: String, targetFile: File, onResult: (photo: File?) -> Unit) {
         val intent = Intent(action)
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
         if (targetFile.exists()) {
             targetFile.delete()
+        } else if (targetFile.parentFile?.exists() == false) {
+            targetFile.parentFile?.mkdirs()
         }
         val uri = targetFile.toUri(activity, requireFileProvider)
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
         OkActivityResult.startActivity(activity, intent) { resultCode ->
-            if (resultCode == Activity.RESULT_OK) {
+            if (resultCode == Activity.RESULT_OK && targetFile.exists()) {
+                MediaScannerConnection.scanFile(activity, arrayOf(targetFile.absolutePath), arrayOf(if (action == MediaStore.ACTION_VIDEO_CAPTURE) "video/mp4" else "image/jpeg"), null)
                 onResult(targetFile)
+            } else {
+                onResult(null)
             }
         }
     }

@@ -16,6 +16,6 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        PhotoSelector.init("${packageName}.fileProvider")
+        PhotoSelector.init(this,"${packageName}.fileProvider")
     }
 }

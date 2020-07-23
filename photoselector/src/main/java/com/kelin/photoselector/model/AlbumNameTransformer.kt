@@ -1,5 +1,7 @@
 package com.kelin.photoselector.model
 
+import com.kelin.photoselector.PhotoSelector
+
 /**
  * **描述:** 名字转换器
  *
@@ -23,6 +25,9 @@ open class AlbumNameTransformer : NameTransformer {
             }
             name.equals("screenshots", true) -> {
                 "截屏"
+            }
+            name.equals(PhotoSelector.DEFAULT_PICTURE_DIR, true) -> {
+                "应用相册"
             }
             else -> {
                 name

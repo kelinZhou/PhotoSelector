@@ -291,7 +291,8 @@ class PhotoSelectorActivity : AppCompatActivity() {
             holder.itemView.also { iv ->
                 Glide.with(iv.context)
                     .load(item.uri)
-                    .apply(RequestOptions().centerCrop().placeholder(R.drawable.image_placeholder)).into(iv.ivKelinPhotoSelectorPhotoView)
+                    .apply(RequestOptions().centerCrop().placeholder(R.drawable.image_placeholder))
+                    .into(iv.ivKelinPhotoSelectorPhotoView)
                 val no = selectedPictures.indexOf(item)
                 iv.rlKelinPhotoSelectorChecker.isSelected = no >= 0
                 iv.pmKelinPhotoSelectorPhotoViewMask.isSelected = no >= 0

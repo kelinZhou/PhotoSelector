@@ -43,7 +43,8 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
                     val album = albums[position]
                     Glide.with(iv.context)
                         .load(album.cover.path)
-                        .apply(RequestOptions().centerCrop().placeholder(R.drawable.image_placeholder)).into(iv.ivKelinPhotoSelectorPhotoView)
+                        .apply(RequestOptions().centerCrop().placeholder(R.drawable.image_placeholder))
+                        .into(iv.ivKelinPhotoSelectorPhotoView)
                     iv.tvKelinPhotoSelectorAlbumName.text = album.name
                     iv.tvKelinPhotoSelectorAlbumPath.text = album.path
                     iv.tvKelinPhotoSelectorCount.text = "共${album.pictures.size}个资源"
