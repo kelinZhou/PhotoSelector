@@ -89,7 +89,7 @@ PhotoSelector.openVideoSelector(context) { photos ->
     }
 }
 ```
-5.选择图片和视频
+5. 选择图片和视频
 ```kotlin
 PhotoSelector.openPictureSelector(context) { photos ->
     if (photos.isEmpty()) {
