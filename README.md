@@ -39,7 +39,7 @@ allprojects {
 ###### 第二步：添加这个依赖。
 ```groovy
 dependencies {
-    implementation 'com.github.kelinZhou:Banner:2.7.1'
+    implementation 'com.github.kelinZhou:PhotoSelector:0.5.0'
 }
 ```
 ## 效果图
