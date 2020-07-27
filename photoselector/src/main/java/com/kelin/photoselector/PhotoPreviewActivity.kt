@@ -114,7 +114,7 @@ class PhotoPreviewActivity : AppCompatActivity() {
                     .load(photo.uri)
                     .apply(
                         RequestOptions
-                            .centerCropTransform()
+                            .centerInsideTransform()
                             .error(R.drawable.kelin_photo_selector_img_load_error)
                     )
                     .addListener(object : RequestListener<Drawable> {
