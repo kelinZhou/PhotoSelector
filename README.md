@@ -26,6 +26,10 @@
 
 4.自动去重，自动回显已经选中了的图片或视频，防止选择相同的资源(默认支持，可手动设置)。
 
+## 更新
+
+#### 0.6.0 PhotoSelector 增加 removeSelected 方法。
+增加从外部取消选中的功能，使得使用者可以在选择完毕后调用方法对已选中的进行取消选中的操作(应对不同的使用场景)。
 
 ## 体验
 
@@ -42,7 +46,7 @@ allprojects {
 ###### 第二步：添加这个依赖。
 ```groovy
 dependencies {
-    implementation 'com.github.kelinZhou:PhotoSelector:0.5.0'
+    implementation 'com.github.kelinZhou:PhotoSelector:${last version here!}'
 }
 ```
 ## 效果图
