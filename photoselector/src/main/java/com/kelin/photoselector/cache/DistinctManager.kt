@@ -16,12 +16,12 @@ import com.kelin.photoselector.model.Picture
 internal class DistinctManager private constructor() : CacheOwner<List<Picture>> {
 
     companion object {
-        val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { DistinctManager() }
+        internal val instance by lazy(LazyThreadSafetyMode.SYNCHRONIZED) { DistinctManager() }
     }
 
     private val pool by lazy { SparseArray<Cache<List<Picture>>>() }
 
-    fun tryNewCache(id: Int): LifecycleObserver {
+    internal fun tryNewCache(id: Int): LifecycleObserver {
         var cache = pool[id]
         if (cache == null) {
             cache = PhotoCache(id, this)
@@ -30,13 +30,25 @@ internal class DistinctManager private constructor() : CacheOwner<List<Picture>>
         return cache
     }
 
-    fun getSelected(id: Int): List<Picture>? {
+    internal fun getSelected(id: Int): List<Picture>? {
         return if (id != -1) pool[id]?.cache else null
     }
 
-    fun saveSelected(id: Int, selected: List<Picture>) {
+    internal fun saveSelected(id: Int, selected: List<Picture>) {
         if (id != -1) {
             pool[id]?.onCache(selected)
+        }
+    }
+
+    internal fun remove(id: Int, position: Int) {
+        if (id != -1) {
+            pool[id]?.remove(position)
+        }
+    }
+
+    internal fun remove(id: Int, uri: String) {
+        if (id != -1) {
+            pool[id]?.remove(uri)
         }
     }
 

@@ -13,13 +13,33 @@ import com.kelin.photoselector.model.Picture
  */
 internal class PhotoCache(private val id: Int, private val owner: CacheOwner<List<Picture>>) : Cache<List<Picture>> {
 
-    private var selectedPhotos: List<Picture>? = null
+    private var selectedPhotos: MutableList<Picture>? = null
 
     override val cache: List<Picture>
         get() = selectedPhotos?.let { ArrayList<Picture>(it) } ?: emptyList()
 
     override fun onCache(photos: List<Picture>) {
         selectedPhotos = ArrayList(photos)
+    }
+
+    override fun remove(position: Int) {
+        selectedPhotos?.also {
+            if (position >= 0 && position < it.size) {
+                it.removeAt(position)
+            }
+        }
+    }
+
+    override fun remove(uri: String) {
+        selectedPhotos?.also {
+            val i = it.iterator()
+            while (i.hasNext()) {
+                if (i.next().uri == uri) {
+                    i.remove()
+                    break
+                }
+            }
+        }
     }
 
     override fun onDestroy() {

@@ -254,6 +254,60 @@ object PhotoSelector {
     }
 
     /**
+     * 根据索引移除选中，当你使用了自动去重功能后，如果你在图片选择完毕后对用户提供了删除功能，那么你需要在用户删除后调用该方法同步删除。
+     * @param fragment 如果你选择图片时没有手动设置id且传入的第一个参数是fragment那么就同步删除的时候也需要传入fragment。
+     * @param position 要删除的索引(删除第几个)，索引从0开始。
+     */
+    fun removeSelected(fragment: Fragment, position: Int) {
+        removeSelected(fragment.hashCode(), position)
+    }
+
+    /**
+     * 根据索引移除选中，当你使用了自动去重功能后，如果你在图片选择完毕后对用户提供了删除功能，那么你需要在用户删除后调用该方法同步删除。
+     * @param context 如果你选择图片时没有手动设置id且传入的第一个参数是context那么就同步删除的时候也需要传入context。
+     * @param position 要删除的索引(删除第几个)，索引从0开始。
+     */
+    fun removeSelected(context: Context, position: Int) {
+        removeSelected(context.hashCode(), position)
+    }
+
+    /**
+     * 根据索引移除选中，当你使用了自动去重功能后，如果你在图片选择完毕后对用户提供了删除功能，那么你需要在用户删除后调用该方法同步删除。
+     * @param id 选择图片或视频时的id。
+     * @param position 要删除的索引(删除第几个)，索引从0开始。
+     */
+    fun removeSelected(id: Int, position: Int) {
+        DistinctManager.instance.remove(id, position)
+    }
+
+    /**
+     * 根据filePath移除选中，当你使用了自动去重功能后，如果你在图片选择完毕后对用户提供了删除功能，那么你需要在用户删除后调用该方法同步删除。
+     * @param fragment 如果你选择图片时没有手动设置id且传入的第一个参数是fragment那么就同步删除的时候也需要传入fragment。
+     * @param uri 要删除的图片或视频文件的uri(文件path路径)。
+     */
+    fun removeSelected(fragment: Fragment, uri: String) {
+        removeSelected(fragment.hashCode(), uri)
+    }
+
+    /**
+     * 根据filePath移除选中，当你使用了自动去重功能后，如果你在图片选择完毕后对用户提供了删除功能，那么你需要在用户删除后调用该方法同步删除。
+     * @param context 如果你选择图片时没有手动设置id且传入的第一个参数是context那么就同步删除的时候也需要传入context。
+     * @param uri 要删除的图片或视频文件的uri(文件path路径)。
+     */
+    fun removeSelected(context: Context, uri: String) {
+        removeSelected(context.hashCode(), uri)
+    }
+
+    /**
+     * 根据filePath移除选中，当你使用了自动去重功能后，如果你在图片选择完毕后对用户提供了删除功能，那么你需要在用户删除后调用该方法同步删除。
+     * @param id 选择图片或视频时的id。
+     * @param uri 要删除的图片或视频文件的uri(文件path路径)。
+     */
+    fun removeSelected(id: Int, uri: String) {
+        DistinctManager.instance.remove(id, uri)
+    }
+
+    /**
      * 调用系统的播放功能播放视频。
      * @param context 需要Activity的Context。
      * @param photo Photo对象。

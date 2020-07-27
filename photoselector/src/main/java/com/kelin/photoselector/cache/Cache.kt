@@ -21,4 +21,8 @@ internal interface Cache<E> : LifecycleObserver {
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     fun onDestroy()
+
+    fun remove(position: Int)
+
+    fun remove(uri: String)
 }
