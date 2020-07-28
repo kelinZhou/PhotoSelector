@@ -18,8 +18,16 @@ internal class PhotoCache(private val id: Int, private val owner: CacheOwner<Lis
     override val cache: List<Picture>
         get() = selectedPhotos?.let { ArrayList<Picture>(it) } ?: emptyList()
 
-    override fun onCache(photos: List<Picture>) {
-        selectedPhotos = ArrayList(photos)
+    override fun onCache(caches: List<Picture>) {
+        selectedPhotos = ArrayList(caches)
+    }
+
+    override fun addCache(caches: List<Picture>) {
+        if (selectedPhotos == null) {
+            selectedPhotos = ArrayList(caches)
+        } else {
+            selectedPhotos!!.addAll(caches)
+        }
     }
 
     override fun remove(position: Int) {

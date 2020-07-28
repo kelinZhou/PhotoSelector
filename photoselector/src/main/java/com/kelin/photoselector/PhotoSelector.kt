@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.media.MediaMetadataRetriever
 import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
@@ -17,12 +18,13 @@ import androidx.lifecycle.LifecycleOwner
 import com.kelin.okpermission.OkActivityResult
 import com.kelin.okpermission.OkPermission
 import com.kelin.photoselector.cache.DistinctManager
-import com.kelin.photoselector.model.AlbumNameTransformer
+import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
-import com.kelin.photoselector.model.NameTransformer
-import com.kelin.photoselector.model.Photo
+import com.kelin.photoselector.model.Picture
 import java.io.File
 import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
 
 /**
  * **描述:** 图片选择器核心类。
@@ -43,20 +45,22 @@ object PhotoSelector {
     private var albumNameTransformer: NameTransformer = AlbumNameTransformer()
 
     private var fileProvider: String? = null
+    private var defMaxCount: Int = 9
 
     /**
      * 拍照和录像时的视频或图片的存储路径。
      */
     private var pictureDir: String = DEFAULT_PICTURE_DIR
 
-    internal val requireFileProvider: String
+    private val requireFileProvider: String
         get() = fileProvider ?: throw NullPointerException("You need call the init method first to set fileProvider.")
 
     /**
      * 初始化。
      * @param provider 用于适配在7.0及以上Android版本的文件服务。
      */
-    fun init(context: Context, provider: String) {
+    fun init(context: Context, provider: String, maxCount: Int = 9) {
+        defMaxCount = maxCount
         fileProvider = provider
         pictureDir = context.packageName.let {
             val index = it.lastIndexOf(".")
@@ -85,37 +89,93 @@ object PhotoSelector {
 
     /**
      * 拍摄照片。
-     * @param activity 需要当前的Activity实例。
+     * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
+     * @param id    为本次拍照设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片被选择，
+     * 如果你的页面有多张照片需要上传那么本次拍照会在id相同的选择中复显。
      * @param targetFile 拍摄的照片要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
      * @param onResult 拍摄完成的回调，会将照片文件回调给您。
      */
-    fun takePhoto(activity: Activity, targetFile: File? = null, onResult: (photo: File?) -> Unit) {
+    fun takePhoto(fragment: Fragment, id: Int = fragment.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
+        fragment.activity?.also { activity ->
+            if (id != -1) {
+                fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
+            }
+            OkPermission.with(activity)
+                .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
+                .checkAndApply { granted, _ ->
+                    if (granted) {
+                        takePicture(activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
+                    }
+                }
+        }
+    }
+
+    /**
+     * 拍摄照片。
+     * @param activity 需要当前的Activity实例。
+     * @param id    为本次拍照设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片被选择，
+     * 如果你的页面有多张照片需要上传那么本次拍照会在id相同的选择中复显。
+     * @param targetFile 拍摄的照片要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
+     * @param onResult 拍摄完成的回调，会将照片文件回调给您。
+     */
+    fun takePhoto(activity: Activity, id: Int = activity.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
+        if (id != -1 && activity is LifecycleOwner) {
+            activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
+        }
         OkPermission.with(activity)
             .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
             .checkAndApply { granted, _ ->
                 if (granted) {
-                    takePicture(activity, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
+                    takePicture(activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
                 }
             }
     }
 
     /**
      * 拍摄视频。
-     * @param activity 需要当前的Activity实例。
+     * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
+     * @param id    为本次拍照设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的视频被选择，
+     * 如果你的页面有多个视频需要上传那么本次拍摄会在id相同的选择中复显。
      * @param targetFile 拍摄的视频要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
      * @param onResult 拍摄完成的回调，会将视频文件回调给您。
      */
-    fun takeVideo(activity: Activity, targetFile: File? = null, onResult: (photo: File?) -> Unit) {
+    fun takeVideo(fragment: Fragment, id: Int = fragment.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
+        fragment.activity?.also { activity ->
+            if (id != -1) {
+                fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
+            }
+            OkPermission.with(activity)
+                .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
+                .checkAndApply { granted, _ ->
+                    if (granted) {
+                        takePicture(activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
+                    }
+                }
+        }
+    }
+
+    /**
+     * 拍摄视频。
+     * @param activity 需要当前的Activity实例。
+     * @param id    为本次拍照设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片被选择，
+     * 如果你的页面有多个视频需要上传那么本次拍摄会在id相同的选择中复显。
+     * @param targetFile 拍摄的视频要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
+     * @param onResult 拍摄完成的回调，会将视频文件回调给您。
+     */
+    fun takeVideo(activity: Activity, id: Int = activity.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
+        if (id != -1 && activity is LifecycleOwner) {
+            activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
+        }
         OkPermission.with(activity)
             .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
             .checkAndApply { granted, _ ->
                 if (granted) {
-                    takePicture(activity, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
+                    takePicture(activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
                 }
             }
     }
 
-    private fun takePicture(activity: Activity, action: String, targetFile: File, onResult: (photo: File?) -> Unit) {
+    private fun takePicture(activity: Activity, id: Int, action: String, targetFile: File, onResult: (photo: File?) -> Unit) {
         val intent = Intent(action)
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
@@ -128,7 +188,17 @@ object PhotoSelector {
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
         OkActivityResult.startActivity(activity, intent) { resultCode ->
             if (resultCode == Activity.RESULT_OK && targetFile.exists()) {
-                MediaScannerConnection.scanFile(activity, arrayOf(targetFile.absolutePath), arrayOf(if (action == MediaStore.ACTION_VIDEO_CAPTURE) "video/mp4" else "image/jpeg"), null)
+                val isVideoAction = action == MediaStore.ACTION_VIDEO_CAPTURE
+                MediaScannerConnection.scanFile(activity, arrayOf(targetFile.absolutePath), arrayOf(if (isVideoAction) "video/mp4" else "image/jpeg"), null)
+                val duration = if (isVideoAction) {
+                    MediaMetadataRetriever().let { m ->
+                        m.setDataSource(targetFile.absolutePath)
+                        m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
+                    }
+                } else {
+                    0
+                }
+                DistinctManager.instance.addSelected(id, Picture(targetFile.absolutePath, targetFile.length(), if (isVideoAction) PictureType.VIDEO else PictureType.PHOTO, formatDuration(duration), SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date())))
                 onResult(targetFile)
             } else {
                 onResult(null)
@@ -145,9 +215,8 @@ object PhotoSelector {
      * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
-    fun openPhotoSelector(fragment: Fragment, maxCount: Int = 9, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
-        val activity = fragment.activity
-        if (activity != null) {
+    fun openPhotoSelector(fragment: Fragment, maxCount: Int = defMaxCount, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+        fragment.activity?.also { activity ->
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
@@ -164,7 +233,7 @@ object PhotoSelector {
      * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
-    fun openPhotoSelector(context: Context, maxCount: Int = 9, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openPhotoSelector(context: Context, maxCount: Int = defMaxCount, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
         if (id != -1 && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
@@ -180,9 +249,8 @@ object PhotoSelector {
      * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(fragment: Fragment, maxCount: Int = 9, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
-        val activity = fragment.activity
-        if (activity != null) {
+    fun openVideoSelector(fragment: Fragment, maxCount: Int = defMaxCount, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+        fragment.activity?.also { activity ->
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
@@ -199,7 +267,7 @@ object PhotoSelector {
      * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(context: Context, maxCount: Int = 9, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openVideoSelector(context: Context, maxCount: Int = defMaxCount, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
         if (id != -1 && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
@@ -215,9 +283,8 @@ object PhotoSelector {
      * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(fragment: Fragment, maxCount: Int = 9, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
-        val activity = fragment.activity
-        if (activity != null) {
+    fun openPictureSelector(fragment: Fragment, maxCount: Int = defMaxCount, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+        fragment.activity?.also { activity ->
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
@@ -234,7 +301,7 @@ object PhotoSelector {
      * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(context: Context, maxCount: Int = 9, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openPictureSelector(context: Context, maxCount: Int = defMaxCount, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
         if (id != -1 && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
@@ -335,6 +402,26 @@ object PhotoSelector {
                 type
             )
         })
+    }
+
+    internal fun formatDuration(duration: Long): String {
+        return when {
+            duration == 0L -> {
+                ""
+            }
+            duration < 1000 -> {
+                "00:01"
+            }
+            else -> {
+                (duration / 1000).let { d ->
+                    if (d > 3600) {
+                        "%02d:%02d:%02d".format(d / 3600, d / 60 % 60, d % 60)
+                    } else {
+                        "%02d:%02d".format(d / 60 % 60, d % 60)
+                    }
+                }
+            }
+        }
     }
 }
 

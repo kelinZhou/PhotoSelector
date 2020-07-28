@@ -8,6 +8,7 @@ import android.content.res.Configuration
 import android.os.Build
 import android.os.Bundle
 import android.preference.PreferenceManager
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -88,7 +89,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
 
     private val maxCount by lazy { intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, 9) }
 
-    private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(id)) }
+    private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(id, albumType)) }
 
     private val listLayoutManager by lazy {
         object : GridLayoutManager(this@PhotoSelectorActivity, getSpanCount(resources.configuration)) {
@@ -232,11 +233,15 @@ class PhotoSelectorActivity : AppCompatActivity() {
             if (resourceId > 0) {
                 appContext.resources.getDimensionPixelSize(resourceId)
             } else {
-                0
+                dp2px(25)
             }
         } else {
-            0
+            dp2px(25)
         }
+    }
+
+    private fun dp2px(dp: Int): Int {
+        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), resources.displayMetrics).toInt()
     }
 
     private inner class PhotoListAdapter(initialSelected: List<Picture>?) : RecyclerView.Adapter<PhotoHolder>() {

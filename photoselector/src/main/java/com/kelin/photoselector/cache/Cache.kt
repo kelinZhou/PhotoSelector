@@ -17,7 +17,9 @@ internal interface Cache<E> : LifecycleObserver {
 
     val cache: E
 
-    fun onCache(photos: E)
+    fun onCache(caches: E)
+
+    fun addCache(caches: E)
 
     @OnLifecycleEvent(Lifecycle.Event.ON_DESTROY)
     fun onDestroy()

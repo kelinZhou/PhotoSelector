@@ -2,6 +2,7 @@ package com.kelin.photoselector.cache
 
 import android.util.SparseArray
 import androidx.lifecycle.LifecycleObserver
+import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.Picture
 
 /**
@@ -30,13 +31,29 @@ internal class DistinctManager private constructor() : CacheOwner<List<Picture>>
         return cache
     }
 
-    internal fun getSelected(id: Int): List<Picture>? {
-        return if (id != -1) pool[id]?.cache else null
+    internal fun getSelected(id: Int, albumType: AlbumType): List<Picture>? {
+        return if (id != -1) {
+            pool[id]?.cache?.let {
+                if (albumType == AlbumType.PHOTO_VIDEO) {
+                    it
+                } else {
+                    it.filter { photo -> photo.type.type == albumType.type }
+                }
+            }
+        } else {
+            null
+        }
     }
 
     internal fun saveSelected(id: Int, selected: List<Picture>) {
         if (id != -1) {
             pool[id]?.onCache(selected)
+        }
+    }
+
+    internal fun addSelected(id: Int, selected: Picture) {
+        if (id != -1) {
+            pool[id]?.addCache(listOf(selected))
         }
     }
 

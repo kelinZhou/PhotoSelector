@@ -94,7 +94,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                             file.absolutePath,
                             size,
                             type,
-                            if (isVideo) formatDuration(duration) else "",
+                            if (isVideo) PhotoSelector.formatDuration(duration) else "",
                             dataFormat.format(cursor.getLong(cursor.getColumnIndex(FileColumns.DATE_MODIFIED)) * 1000)
                         )
                     )
@@ -127,26 +127,6 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                     }
                 }
             )
-        }
-    }
-
-    private fun formatDuration(duration: Long): String {
-        return when {
-            duration == 0L -> {
-                ""
-            }
-            duration < 1000 -> {
-                "00:01"
-            }
-            else -> {
-                (duration / 1000).let { d ->
-                    if (d > 3600) {
-                        "%02d:%02d:%02d".format(d / 3600, d / 60 % 60, d % 60)
-                    } else {
-                        "%02d:%02d".format(d / 60 % 60, d % 60)
-                    }
-                }
-            }
         }
     }
 
