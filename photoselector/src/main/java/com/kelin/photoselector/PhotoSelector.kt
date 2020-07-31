@@ -12,7 +12,6 @@ import android.os.Environment
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
-import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.kelin.okpermission.OkActivityResult
@@ -21,8 +20,8 @@ import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.Picture
+import com.kelin.photoselector.utils.rotateByDegree
 import java.io.File
-import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -45,7 +44,11 @@ object PhotoSelector {
     private var albumNameTransformer: NameTransformer = AlbumNameTransformer()
 
     private var fileProvider: String? = null
-    private var defMaxCount: Int = 9
+    private var defMaxLength: Int = 9
+    /**
+     * 记录是否需要自动旋转图片，针对某些设备拍照后会自动旋转的问题。
+     */
+    internal var isAutoRotate: Boolean = false
 
     /**
      * 拍照和录像时的视频或图片的存储路径。
@@ -56,12 +59,16 @@ object PhotoSelector {
         get() = fileProvider ?: throw NullPointerException("You need call the init method first to set fileProvider.")
 
     /**
-     * 初始化。
+     * 初始化PhotoSelector库，改方法几乎不耗时，可放心在Application的onCreate方法中使用。
+     * @param context Application的Context即可。
      * @param provider 用于适配在7.0及以上Android版本的文件服务。
+     * @param autoRotate 是否需要在拍照时或选择图片时自动旋转图片，针对某些机型(例如小米手机)拍照后图片会歪的问题。
+     * @param maxLength 统一设置选择图片或视频时的最大选择数量。如有特殊情况则可以在具体调用时再行设置。
      */
-    fun init(context: Context, provider: String, maxCount: Int = 9) {
-        defMaxCount = maxCount
+    fun init(context: Context, provider: String, autoRotate: Boolean = false, maxLength: Int = 9) {
+        defMaxLength = maxLength
         fileProvider = provider
+        isAutoRotate = autoRotate
         pictureDir = context.packageName.let {
             val index = it.lastIndexOf(".")
             if (index >= 0 && index < it.length) {
@@ -198,7 +205,19 @@ object PhotoSelector {
                 } else {
                     0
                 }
-                DistinctManager.instance.addSelected(id, Picture(targetFile.absolutePath, targetFile.length(), if (isVideoAction) PictureType.VIDEO else PictureType.PHOTO, formatDuration(duration), SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date())))
+                DistinctManager.instance.addSelected(
+                    id,
+                    Picture(
+                        targetFile.absolutePath,
+                        targetFile.length(),
+                        if (isVideoAction) PictureType.VIDEO else PictureType.PHOTO, formatDuration(duration),
+                        SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date())
+                    ).also {
+                        if (isAutoRotate && !it.isVideo) {
+                            it.rotateByDegree()
+                        }
+                    }
+                )
                 onResult(targetFile)
             } else {
                 onResult(null)
@@ -209,103 +228,103 @@ object PhotoSelector {
     /**
      * 打开图片选择页面。页面启动后只能选择图片文件。
      * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
-     * @param maxCount 最大数量，用于设置最多可选择多少张图片。
+     * @param maxLength 最大数量，用于设置最多可选择多少张图片。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Fragment的hashCode，即表示当前Fragment中不允许有重复的图片被选择，
      * 如果当前不是第一次打开图片选择且之前完成过选择(完成是指点击了图片选择页面的完成按钮)，那么之前选择过的图片默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
-    fun openPhotoSelector(fragment: Fragment, maxCount: Int = defMaxCount, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openPhotoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
         fragment.activity?.also { activity ->
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.PHOTO, maxCount, id, result)
+            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.PHOTO, maxLength, id, result)
         }
     }
 
     /**
      * 打开图片选择页面。页面启动后只能选择图片文件。
      * @param context 在Activity中使用时您需要传入当前Activity的实例。
-     * @param maxCount 最大数量，用于设置最多可选择多少张图片。
+     * @param maxLength 最大数量，用于设置最多可选择多少张图片。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片被选择，
      * 如果当前不是第一次打开图片选择且之前完成过选择(完成是指点击了图片选择页面的完成按钮)，那么之前选择过的图片默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
-    fun openPhotoSelector(context: Context, maxCount: Int = defMaxCount, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openPhotoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
         if (id != -1 && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO, maxCount, id, result)
+        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO, maxLength, id, result)
     }
 
     /**
      * 打开视频选择页面。页面启动后只能选择视频文件。
      * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
-     * @param maxCount 最大数量，用于设置最多可选择多少个视频。
+     * @param maxLength 最大数量，用于设置最多可选择多少个视频。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的视频被选择，
      * 如果当前不是第一次打开视频选择且之前完成过选择(完成是指点击了视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(fragment: Fragment, maxCount: Int = defMaxCount, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openVideoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
         fragment.activity?.also { activity ->
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.VIDEO, maxCount, id, result)
+            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.VIDEO, maxLength, id, result)
         }
     }
 
     /**
      * 打开视频选择页面。页面启动后只能选择视频文件。
      * @param context 在Activity中使用时您需要传入当前Activity的实例。
-     * @param maxCount 最大数量，用于设置最多可选择多少个视频。
+     * @param maxLength 最大数量，用于设置最多可选择多少个视频。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的视频被选择，
      * 如果当前不是第一次打开视频选择且之前完成过选择(完成是指点击了视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(context: Context, maxCount: Int = defMaxCount, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openVideoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
         if (id != -1 && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.VIDEO, maxCount, id, result)
+        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.VIDEO, maxLength, id, result)
     }
 
     /**
      * 打开图片和视频的选择页面。页面启动后即能选择图片文件也能选择视频文件。
      * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
-     * @param maxCount 最大数量，用于设置最多可选择多少个图片和视频。
+     * @param maxLength 最大数量，用于设置最多可选择多少个图片和视频。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片和视频被选择，
      * 如果当前不是第一次打开图片和视频选择且之前完成过选择(完成是指点击了图片和视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(fragment: Fragment, maxCount: Int = defMaxCount, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openPictureSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
         fragment.activity?.also { activity ->
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.PHOTO_VIDEO, maxCount, id, result)
+            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.PHOTO_VIDEO, maxLength, id, result)
         }
     }
 
     /**
      * 打开图片和视频的选择页面。页面启动后即能选择图片文件也能选择视频文件。
      * @param context 在Activity中使用时您需要传入当前Activity的实例。
-     * @param maxCount 最大数量，用于设置最多可选择多少个图片和视频。
+     * @param maxLength 最大数量，用于设置最多可选择多少个图片和视频。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片和视频被选择，
      * 如果当前不是第一次打开图片和视频选择且之前完成过选择(完成是指点击了图片和视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(context: Context, maxCount: Int = defMaxCount, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openPictureSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
         if (id != -1 && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO_VIDEO, maxCount, id, result)
+        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO_VIDEO, maxLength, id, result)
     }
 
     /**

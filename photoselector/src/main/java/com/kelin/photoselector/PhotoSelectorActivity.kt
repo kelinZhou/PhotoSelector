@@ -28,6 +28,7 @@ import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.PictureType
 import com.kelin.photoselector.ui.AlbumsDialog
+import com.kelin.photoselector.utils.rotateByDegree
 import kotlinx.android.synthetic.main.activity_kelin_photo_selector_list.*
 import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
 
@@ -48,7 +49,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
         private const val KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT = "key_kelin_photo_selector_max_count"
         private const val KEY_KELIN_PHOTO_SELECTOR_ID = "key_kelin_photo_selector_id"
 
-        internal fun startPictureSelectorPage(context: Context, albumType: AlbumType, maxCount: Int, id: Int, result: (photos: List<Photo>) -> Unit) {
+        internal fun startPictureSelectorPage(context: Context, albumType: AlbumType, maxLength: Int, id: Int, result: (photos: List<Photo>) -> Unit) {
             OkPermission.with(context)
                 .addDefaultPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
                 .checkAndApply { granted, permissions ->
@@ -58,7 +59,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
                             Intent(context, PhotoSelectorActivity::class.java).apply {
                                 putExtra(KEY_KELIN_PHOTO_SELECTOR_ID, id)
                                 putExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, albumType.type)
-                                putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxCount)
+                                putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxLength)
                             }) { resultCode, data ->
                             if (resultCode == Activity.RESULT_OK && data != null) {
                                 result(data)
@@ -87,7 +88,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
 
     private val albumType by lazy { AlbumType.typeOf(intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, AlbumType.PHOTO_VIDEO.type)) }
 
-    private val maxCount by lazy { intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, 9) }
+    private val maxLength by lazy { intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, 9) }
 
     private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(id, albumType)) }
 
@@ -221,7 +222,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
         tvKelinPhotoSelectorReselect.visibility = visible
         btnKelinPhotoSelectorDone.apply {
-            text = "完成($selectedCount/$maxCount)"
+            text = "完成($selectedCount/$maxLength)"
             isEnabled = selectedCount > 0
         }
     }
@@ -335,10 +336,13 @@ class PhotoSelectorActivity : AppCompatActivity() {
                     val selectedPictures = listAdapter.selectedPictures
                     //如果被选中了的资源中没有当前的资源，那么就认为当前用户的目的是选中，否则就是取消选中。
                     val isSelected = !selectedPictures.contains(this)
-                    if (isSelected && listAdapter.selectedPictures.size >= maxCount) {
-                        Toast.makeText(applicationContext, "最多只能选择${maxCount}${if (albumType == AlbumType.PHOTO) "张" else "个"}$message", Toast.LENGTH_SHORT).show()
+                    if (isSelected && listAdapter.selectedPictures.size >= maxLength) {
+                        Toast.makeText(applicationContext, "最多只能选择${maxLength}${if (albumType == AlbumType.PHOTO) "张" else "个"}$message", Toast.LENGTH_SHORT).show()
                     } else {
                         if (isSelected) {
+                            if (PhotoSelector.isAutoRotate && !isVideo) {
+                                rotateByDegree()
+                            }
                             selectedPictures.add(this)
                         } else {
                             //取消选中时判断是否是取消的最后一个，如果不是的话那还要刷新其他的条目变更序号。
