@@ -142,6 +142,7 @@ class PhotoPreviewActivity : AppCompatActivity() {
 
     private inner class PhotoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         init {
+            itemView.ptKelinPhotoSelectorPhotoTargetView.setOnClickListener { finish() }
             //设置播放视频控件点击之后调用系统的播放视频功能播放视频。
             itemView.ivKelinPhotoSelectorPlayVideo.setOnClickListener {
                 PhotoSelector.playVideoWithSystem(this@PhotoPreviewActivity, photos[layoutPosition])

@@ -64,6 +64,10 @@ class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: Attribu
         return bitmap
     }
 
+    override fun setOnClickListener(l: OnClickListener?) {
+        ivKelinPhotoSelectorPhotoView.setOnClickListener(l)
+    }
+
     inner class PhotoTarget(private val target: PhotoTargetView) : CustomViewTarget<PhotoTargetView, Drawable>(target) {
         override fun onLoadFailed(errorDrawable: Drawable?) {
             target.progressBar.visibility = View.GONE
