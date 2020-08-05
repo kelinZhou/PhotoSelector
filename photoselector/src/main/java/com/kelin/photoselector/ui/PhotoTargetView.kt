@@ -66,6 +66,7 @@ class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: Attribu
 
     override fun setOnClickListener(l: OnClickListener?) {
         ivKelinPhotoSelectorPhotoView.setOnClickListener(l)
+        ivKelinPhotoSelectorGifView.setOnClickListener(l)
     }
 
     inner class PhotoTarget(private val target: PhotoTargetView) : CustomViewTarget<PhotoTargetView, Drawable>(target) {

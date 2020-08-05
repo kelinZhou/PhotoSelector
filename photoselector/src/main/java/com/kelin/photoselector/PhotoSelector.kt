@@ -334,8 +334,8 @@ object PhotoSelector {
      * @param select 默认选中的页，例如你一共有5张图片需要预览，但是你希望默认加载第三张图片那么该参数你需要传2(0表示第一张)。
      */
     fun openPicturePreviewPage(context: Context, pictures: List<Photo>, select: Int = 0) {
-        if (pictures.isNotEmpty()) {
-            PhotoPreviewActivity.start(context, pictures, select)
+        if (context is Activity && pictures.isNotEmpty()) {
+            PhotoPreviewActivity.startPreview(context, pictures, select)
         }
     }
 

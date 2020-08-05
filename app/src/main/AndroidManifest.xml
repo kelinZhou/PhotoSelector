@@ -44,6 +44,7 @@
 
         <activity android:name="com.kelin.photoselector.PhotoSelectorActivity"
             android:configChanges="screenSize|orientation"/>
+
         <activity android:name="com.kelin.photoselector.PhotoPreviewActivity" />
     </application>
 

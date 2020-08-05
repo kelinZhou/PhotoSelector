@@ -35,8 +35,11 @@ fun Photo.rotateByDegree() {
             }.also { degree ->
                 if (degree != 0f) {
                     BitmapFactory.decodeFile(uri)?.let { bm ->
-                        Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, Matrix().apply { postRotate(degree, bm.width / 2f, bm.height / 2f) }, true)?.writeToFile(uri)
-                        bm.recycle()
+                        Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, Matrix().apply { postRotate(degree, bm.width / 2f, bm.height / 2f) }, true)?.apply {
+                            bm.recycle()
+                            writeToFile(uri)
+                            recycle()
+                        }
                     }
                 }
             }
@@ -57,7 +60,6 @@ fun Bitmap.writeToFile(targetPath: String) {
         }
         fos.flush()
         fos.close()
-        recycle()
     } catch (e: Exception) {
         e.printStackTrace()
     }

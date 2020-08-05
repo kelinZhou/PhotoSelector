@@ -5,14 +5,8 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
-import android.util.TypedValue
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
-import android.view.WindowManager
+import android.view.*
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.loader.app.LoaderManager
@@ -28,7 +22,10 @@ import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.PictureType
 import com.kelin.photoselector.ui.AlbumsDialog
+import com.kelin.photoselector.utils.fullScreen
 import com.kelin.photoselector.utils.rotateByDegree
+import com.kelin.photoselector.utils.statusBarOffsetPx
+import com.kelin.photoselector.utils.translucentStatusBar
 import kotlinx.android.synthetic.main.activity_kelin_photo_selector_list.*
 import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
 
@@ -52,7 +49,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
         internal fun startPictureSelectorPage(context: Context, albumType: AlbumType, maxLength: Int, id: Int, result: (photos: List<Photo>) -> Unit) {
             OkPermission.with(context)
                 .addDefaultPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .checkAndApply { granted, permissions ->
+                .checkAndApply { granted, _ ->
                     if (granted) {
                         OkActivityResult.startActivity<List<Photo>>(
                             context as Activity,
@@ -70,6 +67,10 @@ class PhotoSelectorActivity : AppCompatActivity() {
                     }
                 }
         }
+    }
+
+    private val sp by lazy {
+        applicationContext.getSharedPreferences("${applicationContext.packageName}_photo_selector", Context.MODE_PRIVATE)
     }
 
     private val id by lazy { intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_ID, -1) }
@@ -118,19 +119,15 @@ class PhotoSelectorActivity : AppCompatActivity() {
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_kelin_photo_selector_list)
-        rlKelinPhotoSelectorToolbar.setPadding(0, getStatusBarOffsetPx(), 0, 0)
-        supportActionBar?.hide()
         window.apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
-            //当系统版本为4.4或者4.4以上时可以使用沉浸式状态栏
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                //透明状态栏
-                addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-            }
+            fullScreen()
+            translucentStatusBar()
         }
+
+        setContentView(R.layout.activity_kelin_photo_selector_list)
+        supportActionBar?.hide()
+
+        rlKelinPhotoSelectorToolbar.setPadding(0, statusBarOffsetPx, 0, 0)
 
         tvKelinPhotoSelectorPageTitle.text = "选择$message"
         updateSelectedCount(0)
@@ -154,7 +151,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
         LoaderManager.getInstance(this).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext) {
             albums = it
-            val defAlbum = it.find { a -> a.name == PreferenceManager.getDefaultSharedPreferences(applicationContext).getString("kelin_photo_selector_selected_album_name", "") } ?: it.firstOrNull()
+            val defAlbum = it.find { a -> a.name == sp.getString("kelin_photo_selector_selected_album_name", "") } ?: it.firstOrNull()
             if (defAlbum == null) {
                 Toast.makeText(this, "您的设备中没有任何${message}", Toast.LENGTH_SHORT).show()
             } else {
@@ -197,10 +194,12 @@ class PhotoSelectorActivity : AppCompatActivity() {
     }
 
     private fun onAlbumSelected(album: Album) {
-        currentAlbumName = album.name
-        PreferenceManager.getDefaultSharedPreferences(applicationContext).edit().putString("kelin_photo_selector_selected_album_name", album.name).apply()
-        listAdapter.setPhotos(album.pictures)
-        tvKelinPhotoSelectorAlbumName.text = album.name
+        if (album.name != currentAlbumName) {
+            currentAlbumName = album.name
+            sp.edit().putString("kelin_photo_selector_selected_album_name", album.name).apply()
+            listAdapter.setPhotos(album.pictures)
+            tvKelinPhotoSelectorAlbumName.text = album.name
+        }
     }
 
     private fun onSelectAlbums() {
@@ -225,24 +224,6 @@ class PhotoSelectorActivity : AppCompatActivity() {
             text = "完成($selectedCount/$maxLength)"
             isEnabled = selectedCount > 0
         }
-    }
-
-    private fun getStatusBarOffsetPx(): Int {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-            val appContext = applicationContext
-            val resourceId = appContext.resources.getIdentifier("status_bar_height", "dimen", "android")
-            if (resourceId > 0) {
-                appContext.resources.getDimensionPixelSize(resourceId)
-            } else {
-                dp2px(25)
-            }
-        } else {
-            dp2px(25)
-        }
-    }
-
-    private fun dp2px(dp: Int): Int {
-        return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, dp.toFloat(), resources.displayMetrics).toInt()
     }
 
     private inner class PhotoListAdapter(initialSelected: List<Picture>?) : RecyclerView.Adapter<PhotoHolder>() {
@@ -297,7 +278,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
             holder.itemView.also { iv ->
                 Glide.with(iv.context)
                     .load(item.uri)
-                    .apply(RequestOptions().centerCrop().placeholder(R.drawable.image_placeholder))
+                    .apply(RequestOptions.centerCropTransform().placeholder(R.drawable.image_placeholder))
                     .into(iv.ivKelinPhotoSelectorPhotoView)
                 val no = selectedPictures.indexOf(item)
                 iv.rlKelinPhotoSelectorChecker.isSelected = no >= 0

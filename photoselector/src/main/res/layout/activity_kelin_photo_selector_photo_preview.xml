@@ -7,15 +7,14 @@
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/vpKelinPhotoSelectorPager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#D000"/>
+        android:layout_height="match_parent"/>
 
     <TextView
         android:id="@+id/tvKelinPhotoSelectorIndicator"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/actionBarSize"
         android:textColor="@android:color/white"
-        android:layout_marginTop="20dp"
+        tools:layout_marginTop="20dp"
         tools:text="1/3"
         android:gravity="center"/>
 </RelativeLayout>

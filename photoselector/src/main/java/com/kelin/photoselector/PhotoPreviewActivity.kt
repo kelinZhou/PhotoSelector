@@ -1,15 +1,13 @@
 package com.kelin.photoselector
 
 import android.annotation.SuppressLint
-import android.content.Context
+import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.Drawable
-import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.view.WindowManager
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
@@ -21,6 +19,9 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.kelin.photoselector.model.Photo
 import com.kelin.photoselector.model.Picture
+import com.kelin.photoselector.utils.fullScreen
+import com.kelin.photoselector.utils.statusBarOffsetPx
+import com.kelin.photoselector.utils.translucentStatusBar
 import kotlinx.android.synthetic.main.activity_kelin_photo_selector_photo_preview.*
 import kotlinx.android.synthetic.main.view_kelin_photo_selector_photo_view.view.*
 
@@ -43,15 +44,18 @@ class PhotoPreviewActivity : AppCompatActivity() {
 
 
         @Suppress("unchecked_cast")
-        internal fun start(context: Context, list: List<Photo>, position: Int = 0) {
-            context.startActivity(Intent(context, PhotoPreviewActivity::class.java).apply {
-                if (list.first() is Picture) {  //有限使用Parsable可以提高效率。
-                    putParcelableArrayListExtra(KEY_PICTURE_URLS_DATA, (list as List<Picture>).let { if (it is ArrayList) it else ArrayList(it) })
-                } else {
-                    putExtra(KEY_PHOTO_URLS_DATA, list.let { if (it is ArrayList) it else ArrayList(it) })
+        internal fun startPreview(context: Activity, list: List<Photo>, position: Int = 0) {
+            context.startActivity(
+                Intent(context, PhotoPreviewActivity::class.java).apply {
+                    if (list.first() is Picture) {  //有限使用Parsable可以提高效率。
+                        putParcelableArrayListExtra(KEY_PICTURE_URLS_DATA, (list as List<Picture>).let { if (it is ArrayList) it else ArrayList(it) })
+                    } else {
+                        putExtra(KEY_PHOTO_URLS_DATA, list.let { if (it is ArrayList) it else ArrayList(it) })
+                    }
+                    putExtra(KEY_SELECTED_POSITION, position)
                 }
-                putExtra(KEY_SELECTED_POSITION, position)
-            })
+            )
+            context.overridePendingTransition(R.anim.anim_alpha_in_300, R.anim.anim_alpha_out_300)
         }
     }
 
@@ -70,22 +74,23 @@ class PhotoPreviewActivity : AppCompatActivity() {
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.apply {
+            setBackgroundDrawableResource(android.R.color.black)
+            fullScreen()
+            translucentStatusBar()
+        }
+
         setContentView(R.layout.activity_kelin_photo_selector_photo_preview)
         supportActionBar?.hide()
-        window.apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                attributes.layoutInDisplayCutoutMode = WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES
-            }
-            //当系统版本为4.4或者4.4以上时可以使用沉浸式状态栏
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-                //透明状态栏
-                addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS)
-            }
-        }
         //获取初始化索引，默认为第一个。
         val p = intent.getIntExtra(KEY_SELECTED_POSITION, 0)
-        //设置图片预览指示器
-        tvKelinPhotoSelectorIndicator.text = "${p + 1}/${photos.size}"
+        tvKelinPhotoSelectorIndicator.apply {
+            (layoutParams as ViewGroup.MarginLayoutParams).also { lp ->
+                lp.topMargin = statusBarOffsetPx
+            }
+            //设置图片预览指示器
+            text = "${p + 1}/${photos.size}"
+        }
         //初始化ViewPager以及所有子View。
         vpKelinPhotoSelectorPager.run {
             offscreenPageLimit = 3  //设置预加载3页，即左边、当前、右边，这样在滑动时更加流畅，基本看不到loading。
@@ -101,6 +106,11 @@ class PhotoPreviewActivity : AppCompatActivity() {
         }
     }
 
+    override fun finish() {
+        super.finish()
+        overridePendingTransition(R.anim.anim_alpha_in_300, R.anim.anim_alpha_out_300)
+    }
+
     private inner class PhotoViewPageAdapter(private val photos: List<Photo>) : RecyclerView.Adapter<PhotoViewHolder>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoViewHolder {
@@ -112,11 +122,7 @@ class PhotoPreviewActivity : AppCompatActivity() {
                 val photo = photos[position]
                 Glide.with(iv.context)
                     .load(photo.uri)
-                    .apply(
-                        RequestOptions
-                            .centerInsideTransform()
-                            .error(R.drawable.kelin_photo_selector_img_load_error)
-                    )
+                    .apply(RequestOptions.centerInsideTransform().error(R.drawable.kelin_photo_selector_img_load_error))
                     .addListener(object : RequestListener<Drawable> {
                         override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?, isFirstResource: Boolean): Boolean {
                             return false
