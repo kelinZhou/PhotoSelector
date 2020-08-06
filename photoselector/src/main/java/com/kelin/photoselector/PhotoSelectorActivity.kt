@@ -23,7 +23,7 @@ import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.PictureType
 import com.kelin.photoselector.ui.AlbumsDialog
 import com.kelin.photoselector.utils.fullScreen
-import com.kelin.photoselector.utils.rotateByDegree
+import com.kelin.photoselector.utils.compressAndRotateByDegree
 import com.kelin.photoselector.utils.statusBarOffsetPx
 import com.kelin.photoselector.utils.translucentStatusBar
 import kotlinx.android.synthetic.main.activity_kelin_photo_selector_list.*
@@ -321,8 +321,8 @@ class PhotoSelectorActivity : AppCompatActivity() {
                         Toast.makeText(applicationContext, "最多只能选择${maxLength}${if (albumType == AlbumType.PHOTO) "张" else "个"}$message", Toast.LENGTH_SHORT).show()
                     } else {
                         if (isSelected) {
-                            if (PhotoSelector.isAutoRotate && !isVideo) {
-                                rotateByDegree()
+                            if (PhotoSelector.isAutoCompress && !isVideo) {
+                                compressAndRotateByDegree()
                             }
                             selectedPictures.add(this)
                         } else {

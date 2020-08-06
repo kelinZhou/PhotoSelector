@@ -44,6 +44,12 @@ internal val Activity.statusBarOffsetPx: Int
         25f.dp2px(this)
     }
 
+internal val Context.screenWidth: Int
+    get() = resources.displayMetrics.widthPixels
+
+internal val Context.screenHeight: Int
+    get() = resources.displayMetrics.heightPixels
+
 internal fun Float.dp2px(context: Context): Int {
     return TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, this, context.resources.displayMetrics).toInt()
 }

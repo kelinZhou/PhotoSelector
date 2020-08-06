@@ -3,7 +3,6 @@ package com.kelin.photoselector.model
 import android.content.Context
 import android.net.Uri
 import android.os.Build
-import com.kelin.photoselector.PhotoSelector
 import java.io.File
 import java.io.Serializable
 

@@ -37,6 +37,8 @@ internal data class Picture(
     val modifyDate: String
 ) : Photo, Parcelable {
 
+    internal var cachePath: String? = null
+
     val rootDirName: String
         get() = "/${path.split("/").let { if (it.size > 1) it[1] else "storage" }}/"
     /**
@@ -61,7 +63,7 @@ internal data class Picture(
         get() = File(path).name
 
     override val uri: String
-        get() = path
+        get() = cachePath ?: path
 
     override val isVideo: Boolean
         get() = type == PictureType.VIDEO

@@ -20,7 +20,9 @@ import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.Picture
-import com.kelin.photoselector.utils.rotateByDegree
+import com.kelin.photoselector.utils.compressAndRotateByDegree
+import com.kelin.photoselector.utils.screenHeight
+import com.kelin.photoselector.utils.screenWidth
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -48,7 +50,7 @@ object PhotoSelector {
     /**
      * 记录是否需要自动旋转图片，针对某些设备拍照后会自动旋转的问题。
      */
-    internal var isAutoRotate: Boolean = false
+    internal var isAutoCompress: Boolean = false
 
     /**
      * 拍照和录像时的视频或图片的存储路径。
@@ -58,17 +60,24 @@ object PhotoSelector {
     private val requireFileProvider: String
         get() = fileProvider ?: throw NullPointerException("You need call the init method first to set fileProvider.")
 
+
+    private var cacheDir: String? = null
+
+    internal val requireCacheDir: String
+        get() = cacheDir ?: throw NullPointerException("You need call the init method first.")
+
     /**
      * 初始化PhotoSelector库，改方法几乎不耗时，可放心在Application的onCreate方法中使用。
      * @param context Application的Context即可。
      * @param provider 用于适配在7.0及以上Android版本的文件服务。
-     * @param autoRotate 是否需要在拍照时或选择图片时自动旋转图片，针对某些机型(例如小米手机)拍照后图片会歪的问题。
+     * @param autoCompress 是否开启自动压缩，如果开启自动压缩还会同时打开图片自动纠正的功能(针对某些机型(例如小米手机)拍照后图片会歪的问题)。
      * @param maxLength 统一设置选择图片或视频时的最大选择数量。如有特殊情况则可以在具体调用时再行设置。
      */
-    fun init(context: Context, provider: String, autoRotate: Boolean = false, maxLength: Int = 9) {
+    fun init(context: Context, provider: String, autoCompress: Boolean = false, maxLength: Int = 9) {
+        cacheDir = "${context.cacheDir.absolutePath}/KelinPhotoSelector/compress/"
         defMaxLength = maxLength
         fileProvider = provider
-        isAutoRotate = autoRotate
+        isAutoCompress = autoCompress
         pictureDir = context.packageName.let {
             val index = it.lastIndexOf(".")
             if (index >= 0 && index < it.length) {
@@ -213,8 +222,8 @@ object PhotoSelector {
                         if (isVideoAction) PictureType.VIDEO else PictureType.PHOTO, formatDuration(duration),
                         SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date())
                     ).also {
-                        if (isAutoRotate && !it.isVideo) {
-                            it.rotateByDegree()
+                        if (isAutoCompress && !it.isVideo) {
+                            it.compressAndRotateByDegree()
                         }
                     }
                 )
