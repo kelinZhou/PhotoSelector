@@ -21,8 +21,6 @@ import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.Picture
 import com.kelin.photoselector.utils.compressAndRotateByDegree
-import com.kelin.photoselector.utils.screenHeight
-import com.kelin.photoselector.utils.screenWidth
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -64,7 +62,7 @@ object PhotoSelector {
     private var cacheDir: String? = null
 
     internal val requireCacheDir: String
-        get() = cacheDir ?: throw NullPointerException("You need call the init method first.")
+        get() = "${cacheDir ?: throw NullPointerException("You need call the init method first.")}/.KelinPhotoSelector/CompressAndRotate/"
 
     /**
      * 初始化PhotoSelector库，改方法几乎不耗时，可放心在Application的onCreate方法中使用。
@@ -74,7 +72,7 @@ object PhotoSelector {
      * @param maxLength 统一设置选择图片或视频时的最大选择数量。如有特殊情况则可以在具体调用时再行设置。
      */
     fun init(context: Context, provider: String, autoCompress: Boolean = false, maxLength: Int = 9) {
-        cacheDir = "${context.cacheDir.absolutePath}/KelinPhotoSelector/compress/"
+        cacheDir = context.cacheDir.absolutePath
         defMaxLength = maxLength
         fileProvider = provider
         isAutoCompress = autoCompress
@@ -202,10 +200,11 @@ object PhotoSelector {
         }
         val uri = targetFile.toUri(activity, requireFileProvider)
         intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
+        val applicationContext = activity.applicationContext
         OkActivityResult.startActivity(activity, intent) { resultCode ->
             if (resultCode == Activity.RESULT_OK && targetFile.exists()) {
                 val isVideoAction = action == MediaStore.ACTION_VIDEO_CAPTURE
-                MediaScannerConnection.scanFile(activity, arrayOf(targetFile.absolutePath), arrayOf(if (isVideoAction) "video/mp4" else "image/jpeg"), null)
+                MediaScannerConnection.scanFile(applicationContext, arrayOf(targetFile.absolutePath), arrayOf(if (isVideoAction) "video/mp4" else "image/jpeg"), null)
                 val duration = if (isVideoAction) {
                     MediaMetadataRetriever().let { m ->
                         m.setDataSource(targetFile.absolutePath)
