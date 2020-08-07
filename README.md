@@ -37,7 +37,7 @@
    
    3. 增加自动压缩功能，您可以在init方法中进行配置是否需要自动压缩，同时取消了自动旋转的配置，开启自动压缩则会同时开启自动旋转。开启方式如下：
 ```kotlin
-        PhotoSelector.init(this,"${packageName}.fileProvider", true)
+PhotoSelector.init(this,"${packageName}.fileProvider", true)
 ```
 
 ### 0.7.1
