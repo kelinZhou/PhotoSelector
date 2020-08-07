@@ -17,6 +17,9 @@ import androidx.lifecycle.LifecycleOwner
 import com.kelin.okpermission.OkActivityResult
 import com.kelin.okpermission.OkPermission
 import com.kelin.photoselector.cache.DistinctManager
+import com.kelin.photoselector.callback.factory.CallbackFactory
+import com.kelin.photoselector.callback.factory.PermissionCallbackFactory
+import com.kelin.photoselector.callback.factory.TakePictureCallbackFactory
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.Picture
@@ -35,6 +38,9 @@ import java.util.*
  * **版本:** v 1.0.0
  */
 object PhotoSelector {
+
+    private val cameraPermissions = arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
+    private val videoPermissions = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
 
     internal const val DEFAULT_PICTURE_DIR = "photoSelector"
 
@@ -114,13 +120,11 @@ object PhotoSelector {
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            OkPermission.with(activity)
-                .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
-                .checkAndApply { granted, _ ->
-                    if (granted) {
-                        takePicture(activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
-                    }
+            attachCallback(activity, PermissionCallbackFactory(cameraPermissions)) { context, granted ->
+                if (granted) {
+                    takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
                 }
+            }
         }
     }
 
@@ -136,13 +140,11 @@ object PhotoSelector {
         if (id != -1 && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        OkPermission.with(activity)
-            .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
-            .checkAndApply { granted, _ ->
-                if (granted) {
-                    takePicture(activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
-                }
+        attachCallback(activity, PermissionCallbackFactory(cameraPermissions)) { context, granted ->
+            if (granted) {
+                takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
             }
+        }
     }
 
     /**
@@ -158,13 +160,11 @@ object PhotoSelector {
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            OkPermission.with(activity)
-                .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
-                .checkAndApply { granted, _ ->
-                    if (granted) {
-                        takePicture(activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
-                    }
+            attachCallback(activity, PermissionCallbackFactory(videoPermissions)) { context, granted ->
+                if (granted) {
+                    takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
                 }
+            }
         }
     }
 
@@ -180,57 +180,19 @@ object PhotoSelector {
         if (id != -1 && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        OkPermission.with(activity)
-            .addDefaultPermissions(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
-            .checkAndApply { granted, _ ->
-                if (granted) {
-                    takePicture(activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
-                }
+        attachCallback(activity, PermissionCallbackFactory(videoPermissions)) { context, granted ->
+            if (granted) {
+                takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
             }
+        }
     }
 
     private fun takePicture(activity: Activity, id: Int, action: String, targetFile: File, onResult: (photo: File?) -> Unit) {
-        val intent = Intent(action)
-        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-        if (targetFile.exists()) {
-            targetFile.delete()
-        } else if (targetFile.parentFile?.exists() == false) {
-            targetFile.parentFile?.mkdirs()
-        }
-        val uri = targetFile.toUri(activity, requireFileProvider)
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
-        val applicationContext = activity.applicationContext
-        OkActivityResult.startActivity(activity, intent) { resultCode ->
-            if (resultCode == Activity.RESULT_OK && targetFile.exists()) {
-                val isVideoAction = action == MediaStore.ACTION_VIDEO_CAPTURE
-                MediaScannerConnection.scanFile(applicationContext, arrayOf(targetFile.absolutePath), arrayOf(if (isVideoAction) "video/mp4" else "image/jpeg"), null)
-                val duration = if (isVideoAction) {
-                    MediaMetadataRetriever().let { m ->
-                        m.setDataSource(targetFile.absolutePath)
-                        m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
-                    }
-                } else {
-                    0
-                }
-                DistinctManager.instance.addSelected(
-                    id,
-                    Picture(
-                        targetFile.absolutePath,
-                        targetFile.length(),
-                        if (isVideoAction) PictureType.VIDEO else PictureType.PHOTO, formatDuration(duration),
-                        SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date())
-                    ).also {
-                        if (isAutoCompress && !it.isVideo) {
-                            it.compressAndRotateByDegree()
-                        }
-                    }
-                )
-                onResult(targetFile)
-            } else {
-                onResult(null)
-            }
-        }
+        attachCallback(activity, TakePictureCallbackFactory(id, action, targetFile, requireFileProvider)) { _, r -> onResult(r) }
+    }
+
+    private fun <R> attachCallback(context: Context, factory: CallbackFactory<R>, callback: (context: Context, r: R) -> Unit) {
+        factory.createCallback().createAndAttachTo(context, callback)
     }
 
     /**
