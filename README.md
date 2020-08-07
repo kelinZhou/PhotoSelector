@@ -39,10 +39,6 @@
         PhotoSelector.init(this,"${packageName}.fileProvider", true)
     ```
 
-```kotlin
-PhotoSelector.init(this,"${packageName}.fileProvider", true)
-```
-
 ### 0.7.1
 解决部分机型拍照后会图片会旋转的问题，解决办法为选择图片或拍照时自动纠正图片角度。自动纠正功能默认不会开启，如要手动开启需要在init方法中设置，例如：
 ```kotlin
