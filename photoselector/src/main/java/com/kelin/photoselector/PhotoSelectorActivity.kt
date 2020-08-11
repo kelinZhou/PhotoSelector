@@ -6,9 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
 import android.view.*
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.DialogFragment
 import androidx.loader.app.LoaderManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,12 +26,14 @@ import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.PictureType
 import com.kelin.photoselector.ui.AlbumsDialog
+import com.kelin.photoselector.ui.ProgressDialog
 import com.kelin.photoselector.utils.fullScreen
 import com.kelin.photoselector.utils.compressAndRotateByDegree
 import com.kelin.photoselector.utils.statusBarOffsetPx
 import com.kelin.photoselector.utils.translucentStatusBar
 import kotlinx.android.synthetic.main.activity_kelin_photo_selector_list.*
 import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
+import java.io.File
 
 /**
  * **描述:** 照片选择的Activity。
@@ -41,7 +47,6 @@ import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
 class PhotoSelectorActivity : AppCompatActivity() {
 
     companion object {
-
         private const val KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE = "key_kelin_photo_selector_album_type"
         private const val KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT = "key_kelin_photo_selector_max_count"
         private const val KEY_KELIN_PHOTO_SELECTOR_ID = "key_kelin_photo_selector_id"
@@ -68,6 +73,10 @@ class PhotoSelectorActivity : AppCompatActivity() {
                 }
         }
     }
+
+    private val handler by lazy { Handler(Looper.getMainLooper()) }
+
+    private val progressDialog by lazy { ProgressDialog() }
 
     private val sp by lazy {
         applicationContext.getSharedPreferences("${applicationContext.packageName}_photo_selector", Context.MODE_PRIVATE)
@@ -173,9 +182,23 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
         //用户点击完成按钮。
         btnKelinPhotoSelectorDone.setOnClickListener {
-            listAdapter.selectedPictures.also {
-                DistinctManager.instance.saveSelected(id, it)
-                OkActivityResult.setResultData(this, it)
+            onSelectDone()
+        }
+    }
+
+    private fun onSelectDone() {
+        listAdapter.selectedPictures.also { selected ->
+            if (selected.all { it.isComposeFinished || it.isVideo }) {
+                selected.forEach {
+                    Log.i("=============", File(it.uri).length().toString())
+                }
+                DistinctManager.instance.saveSelected(id, selected)
+                OkActivityResult.setResultData(this, selected)
+            } else {
+                progressDialog.show(supportFragmentManager, id.toString())
+                handler.postDelayed({
+                    onSelectDone()
+                }, 100)
             }
         }
     }

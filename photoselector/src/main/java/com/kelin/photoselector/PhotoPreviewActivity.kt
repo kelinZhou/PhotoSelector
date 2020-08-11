@@ -55,7 +55,7 @@ class PhotoPreviewActivity : AppCompatActivity() {
                     putExtra(KEY_SELECTED_POSITION, position)
                 }
             )
-            context.overridePendingTransition(R.anim.anim_alpha_in_300, R.anim.anim_alpha_out_300)
+            context.overridePendingTransition(R.anim.anim_alpha_in_400, R.anim.anim_alpha_out_400)
         }
     }
 
@@ -108,7 +108,7 @@ class PhotoPreviewActivity : AppCompatActivity() {
 
     override fun finish() {
         super.finish()
-        overridePendingTransition(R.anim.anim_alpha_in_300, R.anim.anim_alpha_out_300)
+        overridePendingTransition(R.anim.anim_alpha_in_400, R.anim.anim_alpha_out_400)
     }
 
     private inner class PhotoViewPageAdapter(private val photos: List<Photo>) : RecyclerView.Adapter<PhotoViewHolder>() {

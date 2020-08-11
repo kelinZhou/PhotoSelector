@@ -23,13 +23,13 @@ import kotlin.math.max
  */
 
 internal fun Picture.compressAndRotateByDegree() {
-    if (File("${PhotoSelector.requireCacheDir}${name}").exists()) {
-        cachePath = "${PhotoSelector.requireCacheDir}${name}"
+    val file = File("${PhotoSelector.requireCacheDir}${name}")
+    if (file.exists() && file.length() >= 1024) {
+        onComposeFinished("${PhotoSelector.requireCacheDir}${name}")
     } else {
         Executors.newSingleThreadExecutor().execute {
             try {
-                val exifInterface = ExifInterface(uri)
-                val orientation: Int = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
+                val orientation: Int = ExifInterface(uri).getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
                 when (orientation) {
                     ExifInterface.ORIENTATION_ROTATE_90 -> 90f
                     ExifInterface.ORIENTATION_ROTATE_180 -> 180f
@@ -37,15 +37,15 @@ internal fun Picture.compressAndRotateByDegree() {
                     else -> 0f
                 }.also { degree ->
                     if (degree != 0f) {
-                        compress(1080, 1920, degree)?.also { bm ->
-                            Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, Matrix().apply { postRotate(degree, bm.width / 2f, bm.height / 2f) }, true).apply {
+                        compress(1080, 1920, degree)?.let { bm ->
+                            Bitmap.createBitmap(bm, 0, 0, bm.width, bm.height, Matrix().apply { postRotate(degree, bm.width / 2f, bm.height / 2f) }, true).also {
                                 bm.recycle()
                             }
                         }
                     } else {
                         compress(1080, 1920, degree)
                     }?.apply {
-                        cachePath = writeToFile("${PhotoSelector.requireCacheDir}${name}")
+                        onComposeFinished(writeToFile("${PhotoSelector.requireCacheDir}${name}"))
                         recycle()
                     }
                 }
@@ -85,7 +85,14 @@ internal fun Bitmap.writeToFile(targetPath: String): String? {
     return try {
         val targetFile = File(targetPath)
         if (!targetFile.exists()) {
-            targetFile.createNewFile()
+            targetFile.parentFile?.apply {
+                if (!exists()) {
+                    mkdirs()
+                }
+            }
+            if (!targetFile.exists()) {
+                targetFile.createNewFile()
+            }
         }
         val fos = FileOutputStream(targetPath)
         //通过io流的方式来压缩保存图片
@@ -96,7 +103,11 @@ internal fun Bitmap.writeToFile(targetPath: String): String? {
         }
         fos.flush()
         fos.close()
-        targetPath
+        if (targetFile.exists()) {
+            targetPath
+        } else {
+            null
+        }
     } catch (e: Exception) {
         e.printStackTrace()
         null

@@ -23,7 +23,7 @@ import kotlinx.android.synthetic.main.holder_kelin_photo_selector_album.view.*
  *
  * **版本:** v 1.0.0
  */
-internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, private val selectedAlbum: String, private val onAlbumSelected: (album: Album) -> Unit) : Dialog(ctx, R.style.KelinPhotoSelectorBottomAnim) {
+internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, private val selectedAlbum: String, private val onAlbumSelected: (album: Album) -> Unit) : Dialog(ctx, R.style.KelinPhotoSelectorBottomAnimDialog) {
 
     private var selectedPosition = albums.indexOfFirst { it.name == selectedAlbum }.let { if (it < 0) 0 else it }
 

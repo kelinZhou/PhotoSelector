@@ -13,7 +13,7 @@ import java.io.File
  *
  * **版本:** v 1.0.0
  */
-internal data class Picture(
+internal data class Picture internal constructor(
     /**
      * 文件所在的路径。
      */
@@ -34,10 +34,21 @@ internal data class Picture(
     /**
      * 最后修改时间。
      */
-    val modifyDate: String
+    val modifyDate: String,
+    /**
+     * 压缩后的缓存路径。
+     */
+    private var cachePath: String? = null
 ) : Photo, Parcelable {
 
-    internal var cachePath: String? = null
+    internal var isComposeFinished = false
+        private set
+
+
+    fun onComposeFinished(newPath: String?) {
+        isComposeFinished = true
+        cachePath = if (newPath.isNullOrEmpty()) null else newPath
+    }
 
     val rootDirName: String
         get() = "/${path.split("/").let { if (it.size > 1) it[1] else "storage" }}/"
@@ -73,11 +84,12 @@ internal data class Picture(
         parcel.readLong(),
         parcel.readParcelable(PictureType::class.java.classLoader) ?: PictureType.PHOTO,
         parcel.readString() ?: "",
-        parcel.readString() ?: ""
+        parcel.readString() ?: "",
+        parcel.readString()
     )
 
     override fun equals(other: Any?): Boolean {
-        return other != null && other is Photo && other.uri == uri
+        return other != null && other is Picture && other.path == path
     }
 
     override fun hashCode(): Int {
@@ -94,6 +106,7 @@ internal data class Picture(
         parcel.writeParcelable(type, flags)
         parcel.writeString(duration)
         parcel.writeString(modifyDate)
+        parcel.writeString(cachePath)
     }
 
     override fun describeContents(): Int {

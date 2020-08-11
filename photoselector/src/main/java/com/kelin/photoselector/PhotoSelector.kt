@@ -68,7 +68,7 @@ object PhotoSelector {
     private var cacheDir: String? = null
 
     internal val requireCacheDir: String
-        get() = "${cacheDir ?: throw NullPointerException("You need call the init method first.")}/.KelinPhotoSelector/CompressAndRotate/"
+        get() = "${cacheDir ?: throw NullPointerException("You need call the init method first.")}/KelinPhotoSelector/CompressAndRotate/"
 
     /**
      * 初始化PhotoSelector库，改方法几乎不耗时，可放心在Application的onCreate方法中使用。
