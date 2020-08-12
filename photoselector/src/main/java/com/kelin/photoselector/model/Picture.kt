@@ -41,7 +41,7 @@ internal data class Picture internal constructor(
     private var cachePath: String? = null
 ) : Photo, Parcelable {
 
-    internal var isComposeFinished = false
+    internal var isComposeFinished = isVideo
         private set
 
 

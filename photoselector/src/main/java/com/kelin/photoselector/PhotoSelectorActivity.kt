@@ -76,8 +76,6 @@ class PhotoSelectorActivity : AppCompatActivity() {
 
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
-    private val progressDialog by lazy { ProgressDialog() }
-
     private val sp by lazy {
         applicationContext.getSharedPreferences("${applicationContext.packageName}_photo_selector", Context.MODE_PRIVATE)
     }
@@ -186,18 +184,17 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
     }
 
-    private fun onSelectDone() {
+    private fun onSelectDone(needProgress: Boolean = true) {
         listAdapter.selectedPictures.also { selected ->
-            if (selected.all { it.isComposeFinished || it.isVideo }) {
-                selected.forEach {
-                    Log.i("=============", File(it.uri).length().toString())
-                }
+            if (!PhotoSelector.isAutoCompress || selected.all { it.isComposeFinished }) {  //如果压缩已经完成(无论是否成功)
                 DistinctManager.instance.saveSelected(id, selected)
                 OkActivityResult.setResultData(this, selected)
-            } else {
-                progressDialog.show(supportFragmentManager, id.toString())
+            } else {  //如果压缩没有完成
+                if (needProgress) {  //如果需要进度提示
+                    ProgressDialog().show(supportFragmentManager, id.toString())
+                }
                 handler.postDelayed({
-                    onSelectDone()
+                    onSelectDone(false)
                 }, 100)
             }
         }
