@@ -4,8 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.media.MediaMetadataRetriever
-import android.media.MediaScannerConnection
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -14,19 +12,14 @@ import android.webkit.MimeTypeMap
 import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
-import com.kelin.okpermission.OkActivityResult
-import com.kelin.okpermission.OkPermission
 import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.callback.factory.CallbackFactory
 import com.kelin.photoselector.callback.factory.PermissionCallbackFactory
+import com.kelin.photoselector.callback.factory.SelectPictureCallbackFactory
 import com.kelin.photoselector.callback.factory.TakePictureCallbackFactory
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
-import com.kelin.photoselector.model.Picture
-import com.kelin.photoselector.utils.compressAndRotateByDegree
 import java.io.File
-import java.text.SimpleDateFormat
-import java.util.*
 
 /**
  * **描述:** 图片选择器核心类。
@@ -39,8 +32,9 @@ import java.util.*
  */
 object PhotoSelector {
 
-    private val cameraPermissions = arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
-    private val videoPermissions = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE)
+    private val storagePermissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    private val cameraPermissions = arrayOf(Manifest.permission.CAMERA, *storagePermissions)
+    private val videoPermissions = arrayOf(Manifest.permission.CAMERA, Manifest.permission.RECORD_AUDIO, *storagePermissions)
 
     internal const val DEFAULT_PICTURE_DIR = "photoSelector"
 
@@ -209,7 +203,13 @@ object PhotoSelector {
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.PHOTO, maxLength, id, result)
+            attachCallback(activity, PermissionCallbackFactory(storagePermissions)) { ctx, r ->
+                if (r) {
+                    attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.PHOTO, maxLength, id)) { _, photos ->
+                        result(photos)
+                    }
+                }
+            }
         }
     }
 
@@ -226,7 +226,13 @@ object PhotoSelector {
         if (id != -1 && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO, maxLength, id, result)
+        attachCallback(context, PermissionCallbackFactory(storagePermissions)) { ctx, r ->
+            if (r) {
+                attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.PHOTO, maxLength, id)) { _, photos ->
+                    result(photos)
+                }
+            }
+        }
     }
 
     /**
@@ -243,7 +249,13 @@ object PhotoSelector {
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.VIDEO, maxLength, id, result)
+            attachCallback(activity, PermissionCallbackFactory(storagePermissions)) { ctx, r ->
+                if (r) {
+                    attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.VIDEO, maxLength, id)) { _, photos ->
+                        result(photos)
+                    }
+                }
+            }
         }
     }
 
@@ -260,7 +272,13 @@ object PhotoSelector {
         if (id != -1 && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.VIDEO, maxLength, id, result)
+        attachCallback(context, PermissionCallbackFactory(storagePermissions)) { ctx, r ->
+            if (r) {
+                attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.VIDEO, maxLength, id)) { _, photos ->
+                    result(photos)
+                }
+            }
+        }
     }
 
     /**
@@ -277,7 +295,13 @@ object PhotoSelector {
             if (id != -1) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            PhotoSelectorActivity.startPictureSelectorPage(activity, AlbumType.PHOTO_VIDEO, maxLength, id, result)
+            attachCallback(activity, PermissionCallbackFactory(storagePermissions)) { ctx, r ->
+                if (r) {
+                    attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.PHOTO_VIDEO, maxLength, id)) { _, photos ->
+                        result(photos)
+                    }
+                }
+            }
         }
     }
 
@@ -294,7 +318,13 @@ object PhotoSelector {
         if (id != -1 && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        PhotoSelectorActivity.startPictureSelectorPage(context, AlbumType.PHOTO_VIDEO, maxLength, id, result)
+        attachCallback(context, PermissionCallbackFactory(storagePermissions)) { ctx, r ->
+            if (r) {
+                attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.PHOTO_VIDEO, maxLength, id)) { _, photos ->
+                    result(photos)
+                }
+            }
+        }
     }
 
     /**

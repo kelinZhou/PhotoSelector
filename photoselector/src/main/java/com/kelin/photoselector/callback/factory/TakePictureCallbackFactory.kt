@@ -8,7 +8,6 @@ import android.media.MediaScannerConnection
 import android.os.Handler
 import android.os.Looper
 import android.provider.MediaStore
-import android.util.Log
 import androidx.fragment.app.FragmentActivity
 import com.kelin.okpermission.OkActivityResult
 import com.kelin.photoselector.PhotoSelector

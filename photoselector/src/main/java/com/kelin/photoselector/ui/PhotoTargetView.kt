@@ -49,12 +49,8 @@ class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: Attribu
         val height = drawable.intrinsicHeight
 
         drawable.setBounds(0, 0, width, height)
-
         // 获取drawable的颜色格式
-        val config = if (drawable.opacity != PixelFormat.OPAQUE)
-            Bitmap.Config.ARGB_8888
-        else
-            Bitmap.Config.RGB_565
+        val config = if (drawable.opacity != PixelFormat.OPAQUE) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565
         // 创建bitmap
         val bitmap = Bitmap.createBitmap(width, height, config)
         // 创建bitmap画布

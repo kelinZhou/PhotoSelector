@@ -1,39 +1,38 @@
 package com.kelin.photoselector
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.util.Log
-import android.view.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.DialogFragment
 import androidx.loader.app.LoaderManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.kelin.okpermission.OkActivityResult
-import com.kelin.okpermission.OkPermission
 import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.loader.AlbumPictureLoadCallback
-import com.kelin.photoselector.model.*
+import com.kelin.photoselector.model.Album
 import com.kelin.photoselector.model.AlbumType
+import com.kelin.photoselector.model.Picture
 import com.kelin.photoselector.model.PictureType
 import com.kelin.photoselector.ui.AlbumsDialog
 import com.kelin.photoselector.ui.ProgressDialog
-import com.kelin.photoselector.utils.fullScreen
 import com.kelin.photoselector.utils.compressAndRotateByDegree
+import com.kelin.photoselector.utils.fullScreen
 import com.kelin.photoselector.utils.statusBarOffsetPx
 import com.kelin.photoselector.utils.translucentStatusBar
 import kotlinx.android.synthetic.main.activity_kelin_photo_selector_list.*
 import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
-import java.io.File
+
 
 /**
  * **描述:** 照片选择的Activity。
@@ -51,26 +50,10 @@ class PhotoSelectorActivity : AppCompatActivity() {
         private const val KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT = "key_kelin_photo_selector_max_count"
         private const val KEY_KELIN_PHOTO_SELECTOR_ID = "key_kelin_photo_selector_id"
 
-        internal fun startPictureSelectorPage(context: Context, albumType: AlbumType, maxLength: Int, id: Int, result: (photos: List<Photo>) -> Unit) {
-            OkPermission.with(context)
-                .addDefaultPermissions(android.Manifest.permission.READ_EXTERNAL_STORAGE, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                .checkAndApply { granted, _ ->
-                    if (granted) {
-                        OkActivityResult.startActivity<List<Photo>>(
-                            context as Activity,
-                            Intent(context, PhotoSelectorActivity::class.java).apply {
-                                putExtra(KEY_KELIN_PHOTO_SELECTOR_ID, id)
-                                putExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, albumType.type)
-                                putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxLength)
-                            }) { resultCode, data ->
-                            if (resultCode == Activity.RESULT_OK && data != null) {
-                                result(data)
-                            } else {
-                                result(emptyList())
-                            }
-                        }
-                    }
-                }
+        internal fun createPictureSelectorIntent(context: Context, albumType: AlbumType, maxLength: Int, id: Int) = Intent(context, PhotoSelectorActivity::class.java).apply {
+            putExtra(KEY_KELIN_PHOTO_SELECTOR_ID, id)
+            putExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, albumType.type)
+            putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxLength)
         }
     }
 
@@ -101,7 +84,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
     private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(id, albumType)) }
 
     private val listLayoutManager by lazy {
-        object : GridLayoutManager(this@PhotoSelectorActivity, getSpanCount(resources.configuration)) {
+        object : GridLayoutManager(this@PhotoSelectorActivity, getSpanCount(isLandscape(resources.configuration))) {
             override fun onLayoutChildren(
                 recycler: RecyclerView.Recycler?,
                 state: RecyclerView.State?
@@ -202,16 +185,12 @@ class PhotoSelectorActivity : AppCompatActivity() {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        listLayoutManager.spanCount = getSpanCount(newConfig)
+        listLayoutManager.spanCount = getSpanCount(isLandscape(newConfig))
     }
 
-    private fun getSpanCount(config: Configuration): Int {
-        return if (config.orientation == Configuration.ORIENTATION_LANDSCAPE) {
-            8
-        } else {
-            4
-        }
-    }
+    private fun isLandscape(config: Configuration) = config.orientation == Configuration.ORIENTATION_LANDSCAPE
+
+    private fun getSpanCount(landscape: Boolean): Int = if (landscape) 8 else 4
 
     private fun onAlbumSelected(album: Album) {
         if (album.name != currentAlbumName) {
