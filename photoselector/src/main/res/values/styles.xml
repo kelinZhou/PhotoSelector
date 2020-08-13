@@ -2,6 +2,8 @@
 <resources>
 
     <style name="KelinPhotoSelectorBottomAnimDialog" parent="@android:style/Theme.Dialog">
+        <item name="windowMinWidthMajor">100%</item>
+        <item name="windowMinWidthMinor">100%</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowFrame">@null</item>
         <item name="android:windowNoTitle">true</item>
