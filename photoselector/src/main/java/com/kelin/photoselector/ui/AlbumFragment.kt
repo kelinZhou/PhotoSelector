@@ -1,4 +1,4 @@
-package com.kelin.photoselector
+package com.kelin.photoselector.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -11,51 +11,52 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.loader.app.LoaderManager
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.kelin.okpermission.OkActivityResult
+import com.kelin.photoselector.PhotoSelector
+import com.kelin.photoselector.R
 import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.loader.AlbumPictureLoadCallback
 import com.kelin.photoselector.model.Album
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.Picture
 import com.kelin.photoselector.model.PictureType
-import com.kelin.photoselector.ui.AlbumsDialog
-import com.kelin.photoselector.ui.ProgressDialog
 import com.kelin.photoselector.utils.compressAndRotateByDegree
-import com.kelin.photoselector.utils.fullScreen
 import com.kelin.photoselector.utils.statusBarOffsetPx
-import com.kelin.photoselector.utils.translucentStatusBar
-import kotlinx.android.synthetic.main.activity_kelin_photo_selector_list.*
+import com.kelin.photoselector.widget.AlbumsDialog
+import com.kelin.photoselector.widget.ProgressDialog
+import kotlinx.android.synthetic.main.fragment_kelin_photo_selector_list.*
 import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
 
-
 /**
- * **描述:** 照片选择的Activity。
+ * **描述:** 相册页面。
  *
  * **创建人:** kelin
  *
- * **创建时间:** 2020/7/9 3:50 PM
+ * **创建时间:** 2020/8/19 3:12 PM
  *
  * **版本:** v 1.0.0
  */
-class PhotoSelectorActivity : AppCompatActivity() {
+internal class AlbumFragment : BasePhotoSelectorFragment() {
 
     companion object {
         private const val KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE = "key_kelin_photo_selector_album_type"
         private const val KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT = "key_kelin_photo_selector_max_count"
         private const val KEY_KELIN_PHOTO_SELECTOR_ID = "key_kelin_photo_selector_id"
 
-        internal fun createPictureSelectorIntent(context: Context, albumType: AlbumType, maxLength: Int, id: Int) = Intent(context, PhotoSelectorActivity::class.java).apply {
-            putExtra(KEY_KELIN_PHOTO_SELECTOR_ID, id)
-            putExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, albumType.type)
-            putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxLength)
+        internal fun configurationPictureSelectorIntent(intent: Intent, albumType: AlbumType, maxLength: Int, id: Int){
+            intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_ID, id)
+            intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, albumType.type)
+            intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxLength)
         }
     }
+
+    override val rootLayoutRes: Int
+        get() = R.layout.fragment_kelin_photo_selector_list
 
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
@@ -63,11 +64,11 @@ class PhotoSelectorActivity : AppCompatActivity() {
         applicationContext.getSharedPreferences("${applicationContext.packageName}_photo_selector", Context.MODE_PRIVATE)
     }
 
-    private val id by lazy { intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_ID, -1) }
+    private val selectId by lazy { requireArguments().getInt(KEY_KELIN_PHOTO_SELECTOR_ID, -1) }
 
     private var currentAlbumName: String = ""
 
-    private val albumsDialog by lazy { AlbumsDialog(this, albums, currentAlbumName) { onAlbumSelected(it) } }
+    private val albumsDialog by lazy { AlbumsDialog(requireActivity(), albums, currentAlbumName) { onAlbumSelected(it) } }
 
     private val message by lazy {
         when (albumType) {
@@ -77,14 +78,14 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
     }
 
-    private val albumType by lazy { AlbumType.typeOf(intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, AlbumType.PHOTO_VIDEO.type)) }
+    private val albumType by lazy { AlbumType.typeOf(requireArguments().getInt(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, AlbumType.PHOTO_VIDEO.type)) }
 
-    private val maxLength by lazy { intent.getIntExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, 9) }
+    private val maxLength by lazy { requireArguments().getInt(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, PhotoSelector.defMaxLength) }
 
-    private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(id, albumType)) }
+    private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(selectId, albumType)) }
 
     private val listLayoutManager by lazy {
-        object : GridLayoutManager(this@PhotoSelectorActivity, getSpanCount(isLandscape(resources.configuration))) {
+        object : GridLayoutManager(requireContext(), getSpanCount(isLandscape(resources.configuration))) {
             override fun onLayoutChildren(
                 recycler: RecyclerView.Recycler?,
                 state: RecyclerView.State?
@@ -107,17 +108,8 @@ class PhotoSelectorActivity : AppCompatActivity() {
     private var albums = emptyList<Album>()
 
     @SuppressLint("SetTextI18n")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        window.apply {
-            fullScreen()
-            translucentStatusBar()
-        }
-
-        setContentView(R.layout.activity_kelin_photo_selector_list)
-        supportActionBar?.hide()
-
-        rlKelinPhotoSelectorToolbar.setPadding(0, statusBarOffsetPx, 0, 0)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        rlKelinPhotoSelectorToolbar.setPadding(0, context.statusBarOffsetPx, 0, 0)
 
         tvKelinPhotoSelectorPageTitle.text = "选择$message"
         updateSelectedCount(0)
@@ -143,7 +135,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
             albums = it
             val defAlbum = it.find { a -> a.name == sp.getString("kelin_photo_selector_selected_album_name", "") } ?: it.firstOrNull()
             if (defAlbum == null) {
-                Toast.makeText(this, "您的设备中没有任何${message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(applicationContext, "您的设备中没有任何${message}", Toast.LENGTH_SHORT).show()
             } else {
                 onAlbumSelected(defAlbum)
             }
@@ -159,7 +151,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
         //预览选中图片
         tvKelinPhotoSelectorPreview.setOnClickListener {
-            PhotoSelector.openPicturePreviewPage(this, listAdapter.selectedPictures)
+            PhotoSelector.openPicturePreviewPage(requireActivity(), listAdapter.selectedPictures)
         }
         //用户点击完成按钮。
         btnKelinPhotoSelectorDone.setOnClickListener {
@@ -170,11 +162,11 @@ class PhotoSelectorActivity : AppCompatActivity() {
     private fun onSelectDone(needProgress: Boolean = true) {
         listAdapter.selectedPictures.also { selected ->
             if (!PhotoSelector.isAutoCompress || selected.all { it.isComposeFinished }) {  //如果压缩已经完成(无论是否成功)
-                DistinctManager.instance.saveSelected(id, selected)
-                OkActivityResult.setResultData(this, selected)
+                DistinctManager.instance.saveSelected(selectId, selected)
+                OkActivityResult.setResultData(requireActivity(), selected)
             } else {  //如果压缩没有完成
                 if (needProgress) {  //如果需要进度提示
-                    ProgressDialog().show(supportFragmentManager, id.toString())
+                    ProgressDialog().show(requireFragmentManager(), selectId.toString())
                 }
                 handler.postDelayed({
                     onSelectDone(false)
@@ -344,7 +336,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
                 }
             }
             itemView.setOnClickListener {
-                PhotoSelector.openPicturePreviewPage(this@PhotoSelectorActivity, listOf(listAdapter.getItem(layoutPosition)))
+                PhotoSelector.openPicturePreviewPage(requireActivity(), listOf(listAdapter.getItem(layoutPosition)))
             }
         }
     }

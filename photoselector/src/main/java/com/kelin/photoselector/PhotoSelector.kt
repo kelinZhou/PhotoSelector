@@ -19,6 +19,7 @@ import com.kelin.photoselector.callback.factory.SelectPictureCallbackFactory
 import com.kelin.photoselector.callback.factory.TakePictureCallbackFactory
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
+import com.kelin.photoselector.ui.PhotoSelectorActivity
 import java.io.File
 
 /**
@@ -40,7 +41,7 @@ object PhotoSelector {
     private var albumNameTransformer: NameTransformer = AlbumNameTransformer()
 
     private var fileProvider: String? = null
-    private var defMaxLength: Int = 9
+    internal var defMaxLength: Int = 9
     /**
      * 记录是否需要自动旋转图片，针对某些设备拍照后会自动旋转的问题。
      */
@@ -331,7 +332,7 @@ object PhotoSelector {
      */
     fun openPicturePreviewPage(context: Context, pictures: List<Photo>, select: Int = 0) {
         if (context is Activity && pictures.isNotEmpty()) {
-            PhotoPreviewActivity.startPreview(context, pictures, select)
+            PhotoSelectorActivity.startPreview(context, pictures, select)
         }
     }
 

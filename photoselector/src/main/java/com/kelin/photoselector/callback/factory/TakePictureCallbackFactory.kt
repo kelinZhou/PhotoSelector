@@ -17,7 +17,7 @@ import com.kelin.photoselector.callback.LeakProofCallback
 import com.kelin.photoselector.model.Picture
 import com.kelin.photoselector.model.PictureType
 import com.kelin.photoselector.toUri
-import com.kelin.photoselector.ui.ProgressDialog
+import com.kelin.photoselector.widget.ProgressDialog
 import com.kelin.photoselector.utils.compressAndRotateByDegree
 import java.io.File
 import java.text.SimpleDateFormat

@@ -5,12 +5,12 @@
     android:layout_height="wrap_content"
     android:layout_margin="1.5dp">
 
-    <com.kelin.photoselector.ui.PhotoImageView
+    <com.kelin.photoselector.widget.PhotoImageView
         android:id="@+id/ivKelinPhotoSelectorPhotoView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <com.kelin.photoselector.ui.PhotoMask
+    <com.kelin.photoselector.widget.PhotoMask
         android:id="@+id/pmKelinPhotoSelectorPhotoViewMask"
         android:layout_width="match_parent"
         android:layout_height="match_parent"

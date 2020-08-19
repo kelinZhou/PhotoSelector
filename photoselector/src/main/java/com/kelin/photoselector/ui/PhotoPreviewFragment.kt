@@ -1,14 +1,12 @@
-package com.kelin.photoselector
+package com.kelin.photoselector.ui
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import com.bumptech.glide.Glide
@@ -17,12 +15,12 @@ import com.bumptech.glide.load.engine.GlideException
 import com.bumptech.glide.request.RequestListener
 import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
+import com.kelin.photoselector.PhotoSelector
+import com.kelin.photoselector.R
 import com.kelin.photoselector.model.Photo
 import com.kelin.photoselector.model.Picture
-import com.kelin.photoselector.utils.fullScreen
 import com.kelin.photoselector.utils.statusBarOffsetPx
-import com.kelin.photoselector.utils.translucentStatusBar
-import kotlinx.android.synthetic.main.activity_kelin_photo_selector_photo_preview.*
+import kotlinx.android.synthetic.main.fragment_kelin_photo_selector_photo_preview.*
 import kotlinx.android.synthetic.main.view_kelin_photo_selector_photo_view.view.*
 
 /**
@@ -30,39 +28,38 @@ import kotlinx.android.synthetic.main.view_kelin_photo_selector_photo_view.view.
  *
  * **创建人:** kelin
  *
- * **创建时间:** 2020/7/13 6:36 PM
+ * **创建时间:** 2020/8/19 4:05 PM
  *
  * **版本:** v 1.0.0
  */
-class PhotoPreviewActivity : AppCompatActivity() {
+internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
 
     companion object {
-
-        private const val KEY_PHOTO_URLS_DATA = "key_photo_urls_data"
-        private const val KEY_PICTURE_URLS_DATA = "key_picture_urls_data"
-        private const val KEY_SELECTED_POSITION = "key_selected_position"
-
+        private const val KEY_PHOTO_URLS_DATA = "key_kelin_photo_selector_photo_urls_data"
+        private const val KEY_PICTURE_URLS_DATA = "key_kelin_photo_selector_picture_urls_data"
+        private const val KEY_SELECTED_POSITION = "key_kelin_photo_selector_selected_position"
 
         @Suppress("unchecked_cast")
-        internal fun startPreview(context: Activity, list: List<Photo>, position: Int = 0) {
-            context.startActivity(
-                Intent(context, PhotoPreviewActivity::class.java).apply {
-                    if (list.first() is Picture) {  //有限使用Parsable可以提高效率。
-                        putParcelableArrayListExtra(KEY_PICTURE_URLS_DATA, (list as List<Picture>).let { if (it is ArrayList) it else ArrayList(it) })
-                    } else {
-                        putExtra(KEY_PHOTO_URLS_DATA, list.let { if (it is ArrayList) it else ArrayList(it) })
-                    }
-                    putExtra(KEY_SELECTED_POSITION, position)
-                }
-            )
-            context.overridePendingTransition(R.anim.anim_alpha_in_400, R.anim.anim_alpha_out_400)
+        fun configurationPreviewIntent(intent: Intent, list: List<Photo>, position: Int = 0) {
+            if (list.first() is Picture) {  //有限使用Parsable可以提高效率。
+                intent.putParcelableArrayListExtra(KEY_PICTURE_URLS_DATA, (list as List<Picture>).let { if (it is ArrayList) it else ArrayList(it) })
+            } else {
+                intent.putExtra(KEY_PHOTO_URLS_DATA, list.let { if (it is ArrayList) it else ArrayList(it) })
+            }
+            intent.putExtra(KEY_SELECTED_POSITION, position)
         }
     }
 
+    override val rootLayoutRes: Int
+        get() = R.layout.fragment_kelin_photo_selector_photo_preview
+
+
     @Suppress("unchecked_cast")
     private val photos by lazy {
-        intent.getParcelableArrayListExtra<Picture>(KEY_PICTURE_URLS_DATA) ?: intent.getSerializableExtra(KEY_PHOTO_URLS_DATA).let {
-            (it as? ArrayList<Photo>) ?: throw IllegalArgumentException("Photos must not be null!")
+        requireArguments().let { arg ->
+            arg.getParcelableArrayList<Picture>(KEY_PICTURE_URLS_DATA) ?: arg.getSerializable(KEY_PHOTO_URLS_DATA).let {
+                (it as? ArrayList<Photo>) ?: throw IllegalArgumentException("Photos must not be null!")
+            }
         }
     }
 
@@ -72,21 +69,12 @@ class PhotoPreviewActivity : AppCompatActivity() {
     private val pageAdapter by lazy { PhotoViewPageAdapter(photos) }
 
     @SuppressLint("SetTextI18n")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        window.apply {
-            setBackgroundDrawableResource(android.R.color.black)
-            fullScreen()
-            translucentStatusBar()
-        }
-
-        setContentView(R.layout.activity_kelin_photo_selector_photo_preview)
-        supportActionBar?.hide()
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //获取初始化索引，默认为第一个。
-        val p = intent.getIntExtra(KEY_SELECTED_POSITION, 0)
+        val p = requireArguments().getInt(KEY_SELECTED_POSITION, 0)
         tvKelinPhotoSelectorIndicator.apply {
             (layoutParams as ViewGroup.MarginLayoutParams).also { lp ->
-                lp.topMargin = statusBarOffsetPx
+                lp.topMargin = context.statusBarOffsetPx
             }
             //设置图片预览指示器
             text = "${p + 1}/${photos.size}"
@@ -104,11 +92,6 @@ class PhotoPreviewActivity : AppCompatActivity() {
             adapter = pageAdapter
             setCurrentItem(p, false)
         }
-    }
-
-    override fun finish() {
-        super.finish()
-        overridePendingTransition(R.anim.anim_alpha_in_400, R.anim.anim_alpha_out_400)
     }
 
     private inner class PhotoViewPageAdapter(private val photos: List<Photo>) : RecyclerView.Adapter<PhotoViewHolder>() {
@@ -151,7 +134,7 @@ class PhotoPreviewActivity : AppCompatActivity() {
             itemView.ptKelinPhotoSelectorPhotoTargetView.setOnClickListener { finish() }
             //设置播放视频控件点击之后调用系统的播放视频功能播放视频。
             itemView.ivKelinPhotoSelectorPlayVideo.setOnClickListener {
-                PhotoSelector.playVideoWithSystem(this@PhotoPreviewActivity, photos[layoutPosition])
+                PhotoSelector.playVideoWithSystem(requireActivity(), photos[layoutPosition])
             }
         }
     }

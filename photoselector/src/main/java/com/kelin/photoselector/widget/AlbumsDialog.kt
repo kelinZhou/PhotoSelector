@@ -1,4 +1,4 @@
-package com.kelin.photoselector.ui
+package com.kelin.photoselector.widget
 
 import android.annotation.SuppressLint
 import android.app.Dialog

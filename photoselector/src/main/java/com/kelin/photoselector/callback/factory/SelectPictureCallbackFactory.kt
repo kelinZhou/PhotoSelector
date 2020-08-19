@@ -3,7 +3,7 @@ package com.kelin.photoselector.callback.factory
 import android.app.Activity
 import android.content.Context
 import com.kelin.okpermission.OkActivityResult
-import com.kelin.photoselector.PhotoSelectorActivity
+import com.kelin.photoselector.ui.PhotoSelectorActivity
 import com.kelin.photoselector.callback.BaseCallback
 import com.kelin.photoselector.callback.LeakProofCallback
 import com.kelin.photoselector.model.AlbumType

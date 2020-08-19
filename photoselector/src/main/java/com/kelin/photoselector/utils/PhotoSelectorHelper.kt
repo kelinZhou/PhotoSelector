@@ -6,6 +6,8 @@ import android.os.Build
 import android.util.TypedValue
 import android.view.Window
 import android.view.WindowManager
+import androidx.fragment.app.Fragment
+import com.kelin.photoselector.ui.BasePhotoSelectorFragment
 
 /**
  * **描述:** PhotoSelector的工具。
@@ -31,8 +33,11 @@ internal fun Window.translucentStatusBar() {
     }
 }
 
-internal val Activity.statusBarOffsetPx: Int
-    get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+
+internal val Context?.statusBarOffsetPx: Int
+    get() = if (this == null) {
+        0
+    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
         val appContext = applicationContext
         val resourceId = appContext.resources.getIdentifier("status_bar_height", "dimen", "android")
         if (resourceId > 0) {
