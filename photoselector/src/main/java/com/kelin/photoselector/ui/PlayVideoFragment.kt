@@ -37,6 +37,10 @@ internal class PlayVideoFragment : BasePhotoSelectorFragment() {
     }
 
     private var player: ExoPlayer? = null
+    /**
+     * 用来记录用户是否手动按下了暂停按钮。
+     */
+    private var manualPause = false
 
     private val playerEventListener by lazy { PlayerEventListener() }
 
@@ -69,13 +73,21 @@ internal class PlayVideoFragment : BasePhotoSelectorFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.pvKelinPhotoSelectorVideoPlayer.also { pv ->
+            pv.setControlDispatcher(object : DefaultControlDispatcher(){
+                override fun dispatchSetPlayWhenReady(player: Player, playWhenReady: Boolean): Boolean {
+                    manualPause = !playWhenReady //记录用户是否手动暂停了。
+                    return super.dispatchSetPlayWhenReady(player, playWhenReady)
+                }
+            })
             pv.player = player
         }
     }
 
     override fun onResume() {
         super.onResume()
-        player?.playWhenReady = true
+        if (!manualPause) {
+            player?.playWhenReady = true
+        }
     }
 
     override fun onPause() {
