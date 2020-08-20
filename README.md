@@ -28,6 +28,18 @@
 
 ## 更新
 
+### 0.9.0 将Activity替换为Fragment并增加视频播放功能(使用Google的ExoPlayer)。
+    
+    1.完成重构，将所有功能的具体实现都移至Fragment，并舍弃PhotoPreviewActivity。这样做的好处就是即使以后再扩展新的页面，使用者也无需再清单文件中增加新的Activity。
+    
+    2.基于Google的ExoPlayer库增加视频播放功能，支持网络视频和本地视频。原来调用系统播放视频的功能依然保留。调用方式如下：
+```kotlin
+//使用Google的ExoPlayer播放视频。
+PhotoSelector.playVideo(activity, uri)
+//使用Android系统的播放视频功能播放视频。
+PhotoSelector.playVideoWithSystem(activity, uri)
+```
+
 ### 0.8.1
 优化压缩之后的处理逻辑以及优化代码。
     
@@ -69,21 +81,52 @@ PhotoSelector 增加 removeSelected 方法。
 ```groovy
 allprojects {
     repositories {
-        //...
+        //...省略N行代码
         maven { url 'https://jitpack.io' }
     }
 }
 ```
-###### 第二步：添加这个依赖。
+###### 第二步：app的gradle中添加这个依赖。
 ```groovy
 dependencies {
     implementation 'com.github.kelinZhou:PhotoSelector:${last version here!}'
 }
 ```
+###### 第三步：打开Java8支持。
+如果尚未启用，则需要在所有 build.gradle文件中打开Java 8支持，由于视频播放是使用的ExoPlayer库所以必须要打开Java8的支持。方法是在以下android部分添加以下内容：
+```groovy
+android {
+    //...省略N行代码
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+```
+###### 第四步：添加PhotoSelectorActivity到你的清单文件中。
+```xml
+<activity android:name="com.kelin.photoselector.ui.PhotoSelectorActivity"
+          android:configChanges="screenSize|orientation"/>
+```
+###### 第五步：AndroidManifest.xml清单文件中添加PhotoSelector所需要的权限。
+```xml
+<!--网络权限，如果你需要预览网络图片或视频则必须添加改权限-->
+<uses-permission android:name="android.permission.INTERNET" />
+<!--相机权限，拍照、录像时的必要权限-->
+<uses-permission android:name="android.permission.CAMERA" />
+<!--录制视频权限，录像时的必要权限-->
+<uses-permission android:name="android.permission.RECORD_AUDIO" />
+<!--读取外部存储权限，PhotoSelector库中所有功能都会使用到的权限-->
+<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<!--写入外部存储权限，PhotoSelector库中所有功能都会使用到的权限-->
+<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+```
+
 ## 效果图
+[!相册](materials/PhotoSelector_Album.png)
+[!视频播放](materials/PhotoSelector_PlayVideo.png)
 
 ## 使用
-
 1. 拍摄照片
 ```kotlin
 PhotoSelector.takePhoto(context){

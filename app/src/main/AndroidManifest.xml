@@ -3,23 +3,28 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.kelin.photoselectordemo">
 
+    <!--网络权限，如果你需要预览网络图片或视频则必须添加改权限-->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!--相机权限，拍照、录像时的必要权限-->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!--录制视频权限，录像时的必要权限-->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!--读取外部存储权限，PhotoSelector库中所有功能都会使用到的权限-->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!--写入外部存储权限，PhotoSelector库中所有功能都会使用到的权限-->
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:name=".App"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:requestLegacyExternalStorage="true"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
-        android:requestLegacyExternalStorage="true"
-        tools:targetApi="q"
-        android:networkSecurityConfig="@xml/network_security_config">
+        tools:targetApi="q">
 
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -42,8 +47,9 @@
         <activity android:name=".ImageListActivity" />
 
 
-        <activity android:name="com.kelin.photoselector.ui.PhotoSelectorActivity"
-            android:configChanges="screenSize|orientation"/>
+        <activity
+            android:name="com.kelin.photoselector.ui.PhotoSelectorActivity"
+            android:configChanges="screenSize|orientation" />
     </application>
 
 </manifest>
