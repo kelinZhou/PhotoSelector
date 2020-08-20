@@ -103,12 +103,18 @@ android {
     }
 }
 ```
-###### 第四步：添加PhotoSelectorActivity到你的清单文件中。
+
+## 效果图
+![相册](materials/PhotoSelector_Album.png)
+![视频播放](materials/PhotoSelector_PlayVideo.png)
+
+## 使用
+###### 第一步：添加PhotoSelectorActivity到你的清单文件中。
 ```xml
 <activity android:name="com.kelin.photoselector.ui.PhotoSelectorActivity"
           android:configChanges="screenSize|orientation"/>
 ```
-###### 第五步：AndroidManifest.xml清单文件中添加PhotoSelector所需要的权限。
+###### 第二步：AndroidManifest.xml清单文件中添加PhotoSelector所需要的权限。
 ```xml
 <!--网络权限，如果你需要预览网络图片或视频则必须添加改权限-->
 <uses-permission android:name="android.permission.INTERNET" />
@@ -122,11 +128,8 @@ android {
 <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 ```
 
-## 效果图
-![相册](materials/PhotoSelector_Album.png)
-![视频播放](materials/PhotoSelector_PlayVideo.png)
+**完成上面两步后就可以开始使用了。整个库的核心类就一个```PhotoSelector``。你只需要使用它的相应方法就能完成相应功能。具体Api如下：**
 
-## 使用
 1. 拍摄照片
 ```kotlin
 PhotoSelector.takePhoto(context){
@@ -190,6 +193,14 @@ PhotoSelector.openPicturePreviewPage(
         PhotoImpl("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1594798037700&di=7b4c89fdcb5a1ede4f13ca642d743907&imgtype=0&src=http%3A%2F%2Fb-ssl.duitang.com%2Fuploads%2Fitem%2F201511%2F28%2F20151128182741_Mywkf.png")
     )
 )
+```
+7. 播放视频
+```kotlin
+PhotoSelector.playVideo(activity, "网络路径.mp4 或 本地路径.mp4")
+```
+8. 使用系统自带的播放功能播放视频
+```kotlin
+PhotoSelector.playVideoWithSystem(activity, "网络路径.mp4 或 本地路径.mp4")
 ```
 
 * * *
