@@ -2,6 +2,7 @@
 
 buildscript {
     ext.kotlin_version = '1.3.61'
+    ext.exoplayer_version = '2.11.7'
     repositories {
         google()
         jcenter()

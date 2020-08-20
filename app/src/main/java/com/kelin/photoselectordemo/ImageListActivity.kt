@@ -82,7 +82,7 @@ class ImageListActivity : AppCompatActivity() {
                 PhotoSelector.openPicturePreviewPage(this@ImageListActivity, photos, layoutPosition)
             }
             itemView.ivPlayVideo.setOnClickListener {
-                PhotoSelector.playVideoWithSystem(this@ImageListActivity, photos[layoutPosition])
+                PhotoSelector.playVideo(this@ImageListActivity, photos[layoutPosition])
             }
         }
     }

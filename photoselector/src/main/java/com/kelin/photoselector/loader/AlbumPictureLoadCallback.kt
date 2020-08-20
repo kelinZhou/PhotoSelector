@@ -94,7 +94,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                             file.absolutePath,
                             size,
                             type,
-                            if (isVideo) PhotoSelector.formatDuration(duration) else "",
+                            if (isVideo) duration.formatToDurationString() else "",
                             dataFormat.format(cursor.getLong(cursor.getColumnIndex(FileColumns.DATE_MODIFIED)) * 1000)
                         )
                     )

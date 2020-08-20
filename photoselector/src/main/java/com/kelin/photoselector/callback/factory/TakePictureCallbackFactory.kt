@@ -16,7 +16,8 @@ import com.kelin.photoselector.callback.BaseCallback
 import com.kelin.photoselector.callback.LeakProofCallback
 import com.kelin.photoselector.model.Picture
 import com.kelin.photoselector.model.PictureType
-import com.kelin.photoselector.toUri
+import com.kelin.photoselector.model.formatToDurationString
+import com.kelin.photoselector.model.toUri
 import com.kelin.photoselector.widget.ProgressDialog
 import com.kelin.photoselector.utils.compressAndRotateByDegree
 import java.io.File
@@ -67,7 +68,7 @@ class TakePictureCallbackFactory(private val id: Int, private val action: String
                     val picture = Picture(
                         targetFile.absolutePath,
                         targetFile.length(),
-                        if (isVideoAction) PictureType.VIDEO else PictureType.PHOTO, PhotoSelector.formatDuration(duration),
+                        if (isVideoAction) PictureType.VIDEO else PictureType.PHOTO, duration.formatToDurationString(),
                         SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date())
                     )
                     if (PhotoSelector.isAutoCompress && !isVideoAction) {

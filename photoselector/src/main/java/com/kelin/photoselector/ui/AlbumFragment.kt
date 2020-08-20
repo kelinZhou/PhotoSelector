@@ -29,7 +29,7 @@ import com.kelin.photoselector.utils.compressAndRotateByDegree
 import com.kelin.photoselector.utils.statusBarOffsetPx
 import com.kelin.photoselector.widget.AlbumsDialog
 import com.kelin.photoselector.widget.ProgressDialog
-import kotlinx.android.synthetic.main.fragment_kelin_photo_selector_list.*
+import kotlinx.android.synthetic.main.fragment_kelin_photo_selector_album.*
 import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
 
 /**
@@ -56,7 +56,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
     }
 
     override val rootLayoutRes: Int
-        get() = R.layout.fragment_kelin_photo_selector_list
+        get() = R.layout.fragment_kelin_photo_selector_album
 
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 

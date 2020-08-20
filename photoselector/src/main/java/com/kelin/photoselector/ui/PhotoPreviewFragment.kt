@@ -134,7 +134,7 @@ internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
             itemView.ptKelinPhotoSelectorPhotoTargetView.setOnClickListener { finish() }
             //设置播放视频控件点击之后调用系统的播放视频功能播放视频。
             itemView.ivKelinPhotoSelectorPlayVideo.setOnClickListener {
-                PhotoSelector.playVideoWithSystem(requireActivity(), photos[layoutPosition])
+                PhotoSelector.playVideo(requireActivity(), photos[layoutPosition])
             }
         }
     }

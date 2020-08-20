@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.kelin.okpermission.OkPermission
@@ -395,6 +394,26 @@ object PhotoSelector {
      * @param context 需要Activity的Context。
      * @param photo Photo对象。
      */
+    fun playVideo(context: Context, photo: Photo) {
+        playVideo(context, photo.uri)
+    }
+
+    /**
+     * 调用PhotoSelector的视频播放功能播放视频。
+     * @param context 需要Activity的Context。
+     * @param uri 视频文件的uri地址，可以是网络上的url路径也可以是本地的视频文件地址。
+     */
+    fun playVideo(context: Context, uri: String) {
+        if (context is Activity && uri.isNotEmpty() && uri.length > 12) {
+            PhotoSelectorActivity.playVideo(context, uri)
+        }
+    }
+
+    /**
+     * 调用系统的播放功能播放视频。
+     * @param context 需要Activity的Context。
+     * @param photo Photo对象。
+     */
     fun playVideoWithSystem(context: Context, photo: Photo) {
         playVideoWithSystem(
             context, photo.getUri(context) ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N || photo.uri.startsWith("http")) {
@@ -418,33 +437,5 @@ object PhotoSelector {
                 type
             )
         })
-    }
-
-    internal fun formatDuration(duration: Long): String {
-        return when {
-            duration == 0L -> {
-                ""
-            }
-            duration < 1000 -> {
-                "00:01"
-            }
-            else -> {
-                (duration / 1000).let { d ->
-                    if (d > 3600) {
-                        "%02d:%02d:%02d".format(d / 3600, d / 60 % 60, d % 60)
-                    } else {
-                        "%02d:%02d".format(d / 60 % 60, d % 60)
-                    }
-                }
-            }
-        }
-    }
-}
-
-fun File.toUri(context: Context, provider: String = "${context.packageName}.fileProvider"): Uri {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-        FileProvider.getUriForFile(context, provider, this)
-    } else {
-        Uri.fromFile(this)
     }
 }

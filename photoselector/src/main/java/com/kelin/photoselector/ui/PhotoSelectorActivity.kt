@@ -30,28 +30,40 @@ class PhotoSelectorActivity : AppCompatActivity() {
         private const val KEY_TARGET_PAGE = "kelin_photo_selector_key_target_page"
         private const val PAGE_ALBUM = 0x01
         private const val PAGE_PREVIEW = 0x02
+        private const val PAGE_PLAY_VIDEO = 0x03
+
+        private fun createBaseIntent(context: Context, targetPage: Int): Intent {
+            return Intent(context, PhotoSelectorActivity::class.java).apply {
+                putExtra(KEY_TARGET_PAGE, targetPage)
+            }
+        }
 
         internal fun createPictureSelectorIntent(context: Context, albumType: AlbumType, maxLength: Int, id: Int): Intent {
-            return Intent(context, PhotoSelectorActivity::class.java).also { intent ->
-                intent.putExtra(KEY_TARGET_PAGE, PAGE_ALBUM)
+            return createBaseIntent(context, PAGE_ALBUM).also { intent ->
                 AlbumFragment.configurationPictureSelectorIntent(intent, albumType, maxLength, id)
             }
         }
 
-        internal fun startPreview(context: Activity, list: List<Photo>, position: Int = 0) {
-            Intent(context, PhotoSelectorActivity::class.java).apply {
-                putExtra(KEY_TARGET_PAGE, PAGE_PREVIEW)
-            }.also { intent ->
+        internal fun startPreview(activity: Activity, list: List<Photo>, position: Int = 0) {
+            createBaseIntent(activity, PAGE_PREVIEW).also { intent ->
                 PhotoPreviewFragment.configurationPreviewIntent(intent, list, position)
-                context.startActivity(intent)
+                activity.startActivity(intent)
             }
-            context.overridePendingTransition(R.anim.anim_alpha_in_400, R.anim.anim_alpha_out_400)
+            activity.overridePendingTransition(R.anim.anim_alpha_in_400, R.anim.anim_alpha_out_400)
+        }
+
+        fun playVideo(activity: Activity, uri: String) {
+            createBaseIntent(activity, PAGE_PLAY_VIDEO).also { intent ->
+                PlayVideoFragment.configurationPlayVideoIntent(intent, uri)
+                activity.startActivity(intent)
+            }
+            activity.overridePendingTransition(R.anim.anim_alpha_in_400, R.anim.anim_alpha_out_400)
         }
     }
 
     private val targetPage by lazy { intent.getIntExtra(KEY_TARGET_PAGE, 0) }
 
-    private val isPreViewPage by lazy { targetPage == PAGE_PREVIEW }
+    private val isPreViewPage by lazy { targetPage == PAGE_PREVIEW || targetPage == PAGE_PLAY_VIDEO }
 
     @SuppressLint("SetTextI18n")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +88,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
         return when (targetPage) {
             PAGE_ALBUM -> createFragment<AlbumFragment>()
             PAGE_PREVIEW -> createFragment<PhotoPreviewFragment>()
+            PAGE_PLAY_VIDEO -> createFragment<PlayVideoFragment>()
             else -> throw RuntimeException("Unknown targetPage:${targetPage}!")
         }
     }
