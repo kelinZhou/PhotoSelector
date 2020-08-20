@@ -194,13 +194,13 @@ PhotoSelector.openPicturePreviewPage(
     )
 )
 ```
-7. 播放视频
+7. 播放视频，支持网络视频以及本队视频。
 ```kotlin
-PhotoSelector.playVideo(activity, "网络路径.mp4 或 本地路径.mp4")
+PhotoSelector.playVideo(activity, "url or filePath")
 ```
-8. 使用系统自带的播放功能播放视频
+8. 使用系统自带的播放功能播放视频，支持网络视频以及本队视频。
 ```kotlin
-PhotoSelector.playVideoWithSystem(activity, "网络路径.mp4 或 本地路径.mp4")
+PhotoSelector.playVideoWithSystem(activity, "url or filePath")
 ```
 
 * * *
