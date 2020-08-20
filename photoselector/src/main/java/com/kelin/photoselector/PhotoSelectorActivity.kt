@@ -1,4 +1,4 @@
-package com.kelin.photoselector.ui
+package com.kelin.photoselector
 
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -7,9 +7,11 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import com.kelin.photoselector.R
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.Photo
+import com.kelin.photoselector.ui.AlbumFragment
+import com.kelin.photoselector.ui.PhotoPreviewFragment
+import com.kelin.photoselector.ui.PlayVideoFragment
 import com.kelin.photoselector.utils.fullScreen
 import com.kelin.photoselector.utils.translucentStatusBar
 

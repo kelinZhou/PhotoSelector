@@ -18,7 +18,7 @@ import com.kelin.photoselector.callback.factory.SelectPictureCallbackFactory
 import com.kelin.photoselector.callback.factory.TakePictureCallbackFactory
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
-import com.kelin.photoselector.ui.PhotoSelectorActivity
+import com.kelin.photoselector.PhotoSelectorActivity
 import java.io.File
 
 /**

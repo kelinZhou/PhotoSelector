@@ -28,6 +28,12 @@
 
 ## 更新
 
+### 0.9.1 变更PhotoSelectorActivity的包路径，变更后再清单文件注册方式如下：。
+```xml
+<activity android:name="com.kelin.photoselector.PhotoSelectorActivity"
+          android:configChanges="screenSize|orientation"/>
+```
+
 ### 0.9.0 将Activity替换为Fragment并增加视频播放功能(使用Google的ExoPlayer)。
     
     1.完成重构，将所有功能的具体实现都移至Fragment，并舍弃PhotoPreviewActivity。这样做的好处就是即使以后再扩展新的页面，使用者也无需再清单文件中增加新的Activity。
@@ -111,7 +117,7 @@ android {
 ## 使用
 ###### 第一步：添加PhotoSelectorActivity到你的清单文件中。
 ```xml
-<activity android:name="com.kelin.photoselector.ui.PhotoSelectorActivity"
+<activity android:name="com.kelin.photoselector.PhotoSelectorActivity"
           android:configChanges="screenSize|orientation"/>
 ```
 ###### 第二步：AndroidManifest.xml清单文件中添加PhotoSelector所需要的权限。
