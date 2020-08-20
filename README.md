@@ -123,8 +123,8 @@ android {
 ```
 
 ## 效果图
-[!相册](materials/PhotoSelector_Album.png)
-[!视频播放](materials/PhotoSelector_PlayVideo.png)
+![相册](materials/PhotoSelector_Album.png)
+![视频播放](materials/PhotoSelector_PlayVideo.png)
 
 ## 使用
 1. 拍摄照片
