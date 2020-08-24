@@ -191,7 +191,7 @@ PhotoSelector.openPictureSelector(context) { photos ->
     }
 }
 ```
-6. 图片或视频预览
+6. 图片或视频预览，支持本地图片已经网络图片。
 ```kotlin
 PhotoSelector.openPicturePreviewPage(
     context, listOf(
@@ -202,7 +202,7 @@ PhotoSelector.openPicturePreviewPage(
     )
 )
 ```
-7. 播放视频，支持网络视频以及本队视频。
+7. 播放视频，支持网络视频以及本地视频。
 ```kotlin
 PhotoSelector.playVideo(activity, "url or filePath")
 ```
