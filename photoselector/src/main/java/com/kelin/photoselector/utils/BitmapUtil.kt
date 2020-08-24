@@ -47,9 +47,10 @@ internal fun Picture.compressAndRotateByDegree() {
                     }?.apply {
                         onComposeFinished(writeToFile("${PhotoSelector.requireCacheDir}${name}"))
                         recycle()
-                    }
+                    } ?: onComposeFinished()//保证onComposeFinished()一定会被回调。
                 }
             } catch (e: Exception) {
+                onComposeFinished() //保证onComposeFinished()一定会被回调。
                 e.printStackTrace()
             }
         }

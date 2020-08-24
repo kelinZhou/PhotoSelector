@@ -45,7 +45,7 @@ internal data class Picture internal constructor(
         private set
 
 
-    fun onComposeFinished(newPath: String?) {
+    fun onComposeFinished(newPath: String? = null) {
         isComposeFinished = true
         cachePath = if (newPath.isNullOrEmpty()) null else newPath
     }
