@@ -83,6 +83,9 @@ PhotoSelector 增加 removeSelected 方法。
     2. 修复图片预览时因使用了错误的缩放模式而导致的图片显示不正常的Bug。
 
 ## 体验
+[点击下载](http://d.firim.vip/cspz)或扫码下载DemoApk
+
+![DemoApk](materials/apk_download.png)
 
 ## 下载
 ###### 第一步：添加 JitPack 仓库到你项目根目录的 gradle 文件中。
