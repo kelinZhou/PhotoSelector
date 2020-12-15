@@ -88,7 +88,7 @@ class TakePictureCallbackFactory(private val id: Int, private val action: String
                     progressDialog!!.dismiss()
                 }
                 DistinctManager.instance.addSelected(id, picture)
-                callback(targetFile)
+                callback(File(picture.uri))
             } else {
                 if (progressDialog == null) {
                     progressDialog = ProgressDialog().also { dialog ->
