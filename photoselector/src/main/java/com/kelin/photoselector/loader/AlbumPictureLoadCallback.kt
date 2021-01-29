@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.database.Cursor
 import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
@@ -76,13 +77,16 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                 val isVideo = type == PictureType.VIDEO
                 val duration = if (isVideo) {
                     cursor.getLong(cursor.getColumnIndex(FileColumns.DURATION)).let {
-                        if (it > 0) {
-                            it
-                        } else {//有些手机的有些视频可能从数据库查不到视频长度，如果长度是0则认为没有查到，那么就用下面的方式重新获取一次视频长度。
-                            MediaMetadataRetriever().let { m ->
-                                m.setDataSource(path)
-                                m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
+                        when {
+                            it > 0 -> it
+                            size >= 4096 -> { //但是视频太小的将会导致无法播放，所以这里过滤一下文件大小。
+                                //有些手机的有些视频可能从数据库查不到视频长度，如果长度是0则认为没有查到，那么就用下面的方式重新获取一次视频长度。
+                                MediaMetadataRetriever().let { m ->
+                                    m.setDataSource(path)
+                                    m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
+                                }
                             }
+                            else -> 0
                         }
                     }
                 } else {

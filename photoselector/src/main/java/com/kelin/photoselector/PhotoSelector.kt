@@ -31,6 +31,11 @@ import java.io.File
  */
 object PhotoSelector {
 
+    /**
+     * 当选择图片可以重复时的ID。
+     */
+    const val ID_REPEATABLE = -1
+
     internal const val DEFAULT_PICTURE_DIR = "photoSelector"
 
     /**
@@ -106,7 +111,7 @@ object PhotoSelector {
      */
     fun takePhoto(fragment: Fragment, id: Int = fragment.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != -1) {
+            if (id != ID_REPEATABLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
             attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE)) { context, granted ->
@@ -126,7 +131,7 @@ object PhotoSelector {
      * @param onResult 拍摄完成的回调，会将照片文件回调给您。
      */
     fun takePhoto(activity: Activity, id: Int = activity.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
-        if (id != -1 && activity is LifecycleOwner) {
+        if (id != ID_REPEATABLE && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
         attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE)) { context, granted ->
@@ -146,7 +151,7 @@ object PhotoSelector {
      */
     fun takeVideo(fragment: Fragment, id: Int = fragment.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != -1) {
+            if (id != ID_REPEATABLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
             attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_VIDEO)) { context, granted ->
@@ -166,7 +171,7 @@ object PhotoSelector {
      * @param onResult 拍摄完成的回调，会将视频文件回调给您。
      */
     fun takeVideo(activity: Activity, id: Int = activity.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
-        if (id != -1 && activity is LifecycleOwner) {
+        if (id != ID_REPEATABLE && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
         attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_VIDEO)) { context, granted ->
@@ -190,12 +195,12 @@ object PhotoSelector {
      * @param maxLength 最大数量，用于设置最多可选择多少张图片。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Fragment的hashCode，即表示当前Fragment中不允许有重复的图片被选择，
      * 如果当前不是第一次打开图片选择且之前完成过选择(完成是指点击了图片选择页面的完成按钮)，那么之前选择过的图片默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
-     * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
+     * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
     fun openPhotoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != -1) {
+            if (id != ID_REPEATABLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
             attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
@@ -214,11 +219,11 @@ object PhotoSelector {
      * @param maxLength 最大数量，用于设置最多可选择多少张图片。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片被选择，
      * 如果当前不是第一次打开图片选择且之前完成过选择(完成是指点击了图片选择页面的完成按钮)，那么之前选择过的图片默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
-     * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
+     * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
     fun openPhotoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
-        if (id != -1 && context is LifecycleOwner) {
+        if (id != ID_REPEATABLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
         attachCallback(context, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
@@ -236,12 +241,12 @@ object PhotoSelector {
      * @param maxLength 最大数量，用于设置最多可选择多少个视频。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的视频被选择，
      * 如果当前不是第一次打开视频选择且之前完成过选择(完成是指点击了视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
-     * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
+     * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
     fun openVideoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != -1) {
+            if (id != ID_REPEATABLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
             attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
@@ -260,11 +265,11 @@ object PhotoSelector {
      * @param maxLength 最大数量，用于设置最多可选择多少个视频。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的视频被选择，
      * 如果当前不是第一次打开视频选择且之前完成过选择(完成是指点击了视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
-     * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
+     * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
     fun openVideoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
-        if (id != -1 && context is LifecycleOwner) {
+        if (id != ID_REPEATABLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
         attachCallback(context, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
@@ -282,12 +287,12 @@ object PhotoSelector {
      * @param maxLength 最大数量，用于设置最多可选择多少个图片和视频。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片和视频被选择，
      * 如果当前不是第一次打开图片和视频选择且之前完成过选择(完成是指点击了图片和视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
-     * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
+     * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
     fun openPictureSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != -1) {
+            if (id != ID_REPEATABLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
             attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
@@ -306,11 +311,11 @@ object PhotoSelector {
      * @param maxLength 最大数量，用于设置最多可选择多少个图片和视频。
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片和视频被选择，
      * 如果当前不是第一次打开图片和视频选择且之前完成过选择(完成是指点击了图片和视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
-     * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为-1。
+     * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
     fun openPictureSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
-        if (id != -1 && context is LifecycleOwner) {
+        if (id != ID_REPEATABLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
         attachCallback(context, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->

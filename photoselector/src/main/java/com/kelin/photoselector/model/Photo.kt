@@ -48,7 +48,7 @@ interface Photo : Serializable {
 internal fun Long.formatToDurationString(): String {
     return when {
         this == 0L -> {
-            ""
+            "00:00"
         }
         this < 1000 -> {
             "00:01"
