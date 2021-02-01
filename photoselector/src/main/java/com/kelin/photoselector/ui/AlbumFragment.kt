@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -31,6 +32,7 @@ import com.kelin.photoselector.widget.AlbumsDialog
 import com.kelin.photoselector.widget.ProgressDialog
 import kotlinx.android.synthetic.main.fragment_kelin_photo_selector_album.*
 import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
+import java.io.Serializable
 
 /**
  * **描述:** 相册页面。
@@ -48,7 +50,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         private const val KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT = "key_kelin_photo_selector_max_count"
         private const val KEY_KELIN_PHOTO_SELECTOR_ID = "key_kelin_photo_selector_id"
 
-        internal fun configurationPictureSelectorIntent(intent: Intent, albumType: AlbumType, maxLength: Int, id: Int){
+        internal fun configurationPictureSelectorIntent(intent: Intent, albumType: AlbumType, maxLength: Int, id: Int) {
             intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_ID, id)
             intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, albumType.type)
             intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxLength)
@@ -64,7 +66,9 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         applicationContext.getSharedPreferences("${applicationContext.packageName}_photo_selector", Context.MODE_PRIVATE)
     }
 
-    private val selectId by lazy { requireArguments().getInt(KEY_KELIN_PHOTO_SELECTOR_ID, -1) }
+    private val selectorId by lazy { requireArguments().getInt(KEY_KELIN_PHOTO_SELECTOR_ID, -1) }
+
+    private val justSelectOne by lazy { selectorId == PhotoSelector.ID_SINGLE }
 
     private var currentAlbumName: String = ""
 
@@ -72,9 +76,9 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
 
     private val message by lazy {
         when (albumType) {
-            AlbumType.PHOTO -> "图片"
-            AlbumType.VIDEO -> "视频"
-            else -> "图片和视频"
+            AlbumType.PHOTO -> getString(R.string.kelin_photo_selector_pictures)
+            AlbumType.VIDEO -> getString(R.string.kelin_photo_selector_videos)
+            else -> getString(R.string.kelin_photo_selector_pictures_and_videos)
         }
     }
 
@@ -82,7 +86,9 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
 
     private val maxLength by lazy { requireArguments().getInt(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, PhotoSelector.defMaxLength) }
 
-    private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(selectId, albumType)) }
+    private val isSingleSelector by lazy { maxLength == 1 }
+
+    private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(selectorId, albumType)) }
 
     private val listLayoutManager by lazy {
         object : GridLayoutManager(requireContext(), getSpanCount(isLandscape(resources.configuration))) {
@@ -111,7 +117,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         rlKelinPhotoSelectorToolbar.setPadding(0, context.statusBarOffsetPx, 0, 0)
 
-        tvKelinPhotoSelectorPageTitle.text = "选择$message"
+        tvKelinPhotoSelectorPageTitle.text = "${getString(R.string.kelin_photo_selector_select)}$message"
         updateSelectedCount(0)
 
         rvKelinPhotoSelectorPhotoListView.run {
@@ -153,25 +159,38 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         tvKelinPhotoSelectorPreview.setOnClickListener {
             PhotoSelector.openPicturePreviewPage(requireActivity(), listAdapter.selectedPictures)
         }
-        //用户点击完成按钮。
-        btnKelinPhotoSelectorDone.setOnClickListener {
-            onSelectDone()
+        if (justSelectOne) {
+            btnKelinPhotoSelectorDone.setBackgroundColor(Color.TRANSPARENT)
+        } else {
+            //用户点击完成按钮。
+            btnKelinPhotoSelectorDone.setOnClickListener {
+                onSelectDone()
+            }
         }
     }
 
     private fun onSelectDone(needProgress: Boolean = true) {
         listAdapter.selectedPictures.also { selected ->
             if (!PhotoSelector.isAutoCompress || selected.all { it.isComposeFinished }) {  //如果压缩已经完成(无论是否成功)
-                DistinctManager.instance.saveSelected(selectId, selected)
-                OkActivityResult.setResultData(requireActivity(), selected)
+                DistinctManager.instance.saveSelected(selectorId, selected)
+                OkActivityResult.setResultData(requireActivity(), getRealResult(selected))
             } else {  //如果压缩没有完成
                 if (needProgress) {  //如果需要进度提示
-                    ProgressDialog().show(requireFragmentManager(), selectId.toString())
+                    ProgressDialog().show(requireFragmentManager(), selectorId.toString())
                 }
                 handler.postDelayed({
                     onSelectDone(false)
                 }, 100)
             }
+        }
+    }
+
+    @Suppress("UNCHECKED_CAST")
+    private fun getRealResult(selected: ArrayList<Picture>): Serializable? {
+        return if (selectorId == PhotoSelector.ID_SINGLE) {
+            selected.firstOrNull()
+        } else {
+            selected
         }
     }
 
@@ -212,8 +231,8 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         }
         tvKelinPhotoSelectorReselect.visibility = visible
         btnKelinPhotoSelectorDone.apply {
-            text = "完成($selectedCount/$maxLength)"
-            isEnabled = selectedCount > 0
+            text = "${getString(if (justSelectOne) R.string.kelin_photo_selector_selected else R.string.kelin_photo_selector_done)}($selectedCount/$maxLength)"
+            isEnabled = !justSelectOne && selectedCount > 0
         }
     }
 
@@ -227,12 +246,12 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
 
         private var photoList: List<Picture>? = null
 
-        internal val selectedPictures: ArrayList<Picture> = initialSelected?.let { if (it is ArrayList) it else ArrayList(it) } ?: ArrayList()
+        val selectedPictures: ArrayList<Picture> = initialSelected?.let { if (it is ArrayList) it else ArrayList(it) } ?: ArrayList()
 
-        internal val dataList: List<Picture>
+        val dataList: List<Picture>
             get() = photoList ?: emptyList()
 
-        internal fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
+        fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
             photoList = photos
             if (refresh) {
                 notifyDataSetChanged()
@@ -253,13 +272,13 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
             return photoList?.size ?: 0
         }
 
-        internal fun notifyItemChanged(item: Picture) {
+        fun notifyItemChanged(item: Picture) {
             photoList?.run {
                 notifyItemChanged(indexOf(item))
             }
         }
 
-        internal fun getItem(position: Int): Picture {
+        fun getItem(position: Int): Picture {
             return photoList?.get(position)
                 ?: throw NullPointerException("The item must not be null!")
         }
@@ -332,6 +351,9 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                         }
                         listAdapter.notifyItemChanged(layoutPosition)
                         updateSelectedCount(listAdapter.selectedPictures.size)
+                    }
+                    if (isSingleSelector) {
+                        onSelectDone()
                     }
                 }
             }

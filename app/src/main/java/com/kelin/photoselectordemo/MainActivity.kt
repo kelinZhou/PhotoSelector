@@ -34,19 +34,39 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        btnPhotoSelectSingle.setOnClickListener {
+            PhotoSelector.openPhotoSelectorSingle(this) { photo ->
+                if (photo == null) {
+                    Toast.makeText(this, "选择已被取消", Toast.LENGTH_SHORT).show()
+                } else {
+                    PhotoSelector.openPicturePreviewPage(this, listOf(photo))
+                }
+            }
+        }
+
         btnPhotoSelect.setOnClickListener {
             PhotoSelector.openPhotoSelector(this) { photos ->
-                if (photos.isEmpty()) {
+                if (photos.isNullOrEmpty()) {
                     Toast.makeText(this, "选择已被取消", Toast.LENGTH_SHORT).show()
                 } else {
                     ImageListActivity.start(this, *photos.map { it.uri }.toTypedArray())
+                }
+            }
+        }
+
+        btnVideoSelectSingle.setOnClickListener {
+            PhotoSelector.openVideoSelectorSingle(this) { photo ->
+                if (photo == null) {
+                    Toast.makeText(this, "选择已被取消", Toast.LENGTH_SHORT).show()
+                } else {
+                    PhotoSelector.playVideo(this, photo)
                 }
             }
         }
 
         btnVideoSelect.setOnClickListener {
             PhotoSelector.openVideoSelector(this) { photos ->
-                if (photos.isEmpty()) {
+                if (photos.isNullOrEmpty()) {
                     Toast.makeText(this, "选择已被取消", Toast.LENGTH_SHORT).show()
                 } else {
                     ImageListActivity.start(this, *photos.map { it.uri }.toTypedArray())
@@ -54,9 +74,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        btnPhotoAndVideoSelectSingle.setOnClickListener {
+            PhotoSelector.openPictureSelectorSingle(this) { photo ->
+                when {
+                    photo == null -> {
+                        Toast.makeText(this, "选择已被取消", Toast.LENGTH_SHORT).show()
+                    }
+                    photo.isVideo -> {
+                        PhotoSelector.playVideo(this, photo)
+                    }
+                    else -> {
+                        PhotoSelector.openPicturePreviewPage(this, listOf(photo))
+                    }
+                }
+            }
+        }
+
         btnPhotoAndVideoSelect.setOnClickListener {
             PhotoSelector.openPictureSelector(this) { photos ->
-                if (photos.isEmpty()) {
+                if (photos.isNullOrEmpty()) {
                     Toast.makeText(this, "选择已被取消", Toast.LENGTH_SHORT).show()
                 } else {
                     ImageListActivity.start(this, *photos.map { it.uri }.toTypedArray())

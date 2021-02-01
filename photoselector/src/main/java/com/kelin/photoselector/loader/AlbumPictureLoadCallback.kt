@@ -15,6 +15,7 @@ import androidx.loader.app.LoaderManager
 import androidx.loader.content.CursorLoader
 import androidx.loader.content.Loader
 import com.kelin.photoselector.PhotoSelector
+import com.kelin.photoselector.R
 import com.kelin.photoselector.model.*
 import java.io.File
 import java.text.SimpleDateFormat
@@ -113,7 +114,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                     result.groupBy { it.parent }.mapTo(ArrayList()) {
                         val cover = it.value.first()
                         Album(
-                            PhotoSelector.transformAlbumName(cover.parentName),
+                            PhotoSelector.transformAlbumName(context, cover.parentName),
                             cover,
                             it.value
                         )
@@ -122,7 +123,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                         add(
                             0,
                             Album(
-                                "全部",
+                                context.getString(R.string.kelin_photo_selector_all),
                                 cover,
                                 result,
                                 cover.rootDirName

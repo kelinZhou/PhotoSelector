@@ -1,5 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="kelin_photo_selector_preview">预览</string>
-    <string name="kelin_photo_selector_reselect">重选</string>
+    <string name="kelin_photo_selector_preview">Preview</string>
+    <string name="kelin_photo_selector_reselect">Reselect</string>
+    <string name="kelin_photo_selector_selected">Selected</string>
+    <string name="kelin_photo_selector_done">Complete</string>
+    <string name="kelin_photo_selector_camera">Camera</string>
+    <string name="kelin_photo_selector_download">Download</string>
+    <string name="kelin_photo_selector_weichat">WeiChat</string>
+    <string name="kelin_photo_selector_screenshots">Screenshots</string>
+    <string name="kelin_photo_selector_app_album">App Album</string>
+    <string name="kelin_photo_selector_pictures"> Pictures</string>
+    <string name="kelin_photo_selector_videos"> Videos</string>
+    <string name="kelin_photo_selector_pictures_and_videos"><![CDATA[ Pictures&Videos]]></string>
+    <string name="kelin_photo_selector_select">Select</string>
+    <string name="kelin_photo_selector_all">All</string>
 </resources>

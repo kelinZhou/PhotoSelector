@@ -18,18 +18,18 @@ import com.kelin.photoselector.model.Photo
  *
  * **版本:** v 1.0.0
  */
-internal class SelectPictureCallbackFactory(private val albumType: AlbumType, private val maxLength: Int, private val id: Int) : CallbackFactory<List<Photo>> {
-    override fun createCallback(): LeakProofCallback<List<Photo>> {
-        return object : BaseCallback<List<Photo>>() {
+internal class SelectPictureCallbackFactory<R>(private val albumType: AlbumType, private val maxLength: Int, private val id: Int) : CallbackFactory<R?> {
+    override fun createCallback(): LeakProofCallback<R?> {
+        return object : BaseCallback<R?>() {
             override fun onAttach(context: Context) {
-                OkActivityResult.startActivity<List<Photo>>(
+                OkActivityResult.startActivity<R>(
                     context as Activity,
                     PhotoSelectorActivity.createPictureSelectorIntent(context, albumType, maxLength, id)
                 ) { resultCode, data ->
                     if (resultCode == Activity.RESULT_OK && data != null) {
                         callback(data)
                     } else {
-                        callback(emptyList())
+                        callback(null)
                     }
                 }
             }

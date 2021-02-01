@@ -1,5 +1,7 @@
 package com.kelin.photoselector.model
 
+import android.content.Context
+
 /**
  * **描述:** 名字转换器
  *
@@ -10,5 +12,5 @@ package com.kelin.photoselector.model
  * **版本:** v 1.0.0
  */
 interface NameTransformer {
-    fun transform(name: String): String
+    fun transform(context: Context, name: String): String
 }

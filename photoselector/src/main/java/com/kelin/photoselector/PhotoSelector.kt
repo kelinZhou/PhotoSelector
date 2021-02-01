@@ -12,10 +12,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.kelin.okpermission.OkPermission
 import com.kelin.photoselector.cache.DistinctManager
-import com.kelin.photoselector.callback.factory.CallbackFactory
-import com.kelin.photoselector.callback.factory.PermissionCallbackFactory
+import com.kelin.photoselector.callback.factory.*
 import com.kelin.photoselector.callback.factory.SelectPictureCallbackFactory
-import com.kelin.photoselector.callback.factory.TakePictureCallbackFactory
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
 import java.io.File
@@ -36,6 +34,11 @@ object PhotoSelector {
      */
     const val ID_REPEATABLE = -1
 
+    /**
+     * 单选图片或视频时的ID。
+     */
+    const val ID_SINGLE = -9999
+
     internal const val DEFAULT_PICTURE_DIR = "photoSelector"
 
     /**
@@ -45,6 +48,7 @@ object PhotoSelector {
 
     private var fileProvider: String? = null
     internal var defMaxLength: Int = 9
+
     /**
      * 记录是否需要自动旋转图片，针对某些设备拍照后会自动旋转的问题。
      */
@@ -97,8 +101,8 @@ object PhotoSelector {
     /**
      * 改变相册命名。
      */
-    internal fun transformAlbumName(name: String): String {
-        return albumNameTransformer.transform(name)
+    internal fun transformAlbumName(context: Context, name: String): String {
+        return albumNameTransformer.transform(context, name)
     }
 
     /**
@@ -111,7 +115,7 @@ object PhotoSelector {
      */
     fun takePhoto(fragment: Fragment, id: Int = fragment.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != ID_REPEATABLE) {
+            if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
             attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE)) { context, granted ->
@@ -131,7 +135,7 @@ object PhotoSelector {
      * @param onResult 拍摄完成的回调，会将照片文件回调给您。
      */
     fun takePhoto(activity: Activity, id: Int = activity.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
-        if (id != ID_REPEATABLE && activity is LifecycleOwner) {
+        if (id != ID_REPEATABLE && id != ID_SINGLE && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
         attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE)) { context, granted ->
@@ -151,7 +155,7 @@ object PhotoSelector {
      */
     fun takeVideo(fragment: Fragment, id: Int = fragment.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != ID_REPEATABLE) {
+            if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
             attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_VIDEO)) { context, granted ->
@@ -171,7 +175,7 @@ object PhotoSelector {
      * @param onResult 拍摄完成的回调，会将视频文件回调给您。
      */
     fun takeVideo(activity: Activity, id: Int = activity.hashCode(), targetFile: File? = null, onResult: (photo: File?) -> Unit) {
-        if (id != ID_REPEATABLE && activity is LifecycleOwner) {
+        if (id != ID_REPEATABLE && id != ID_SINGLE && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
         attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_VIDEO)) { context, granted ->
@@ -181,12 +185,23 @@ object PhotoSelector {
         }
     }
 
-    private fun takePicture(activity: Activity, id: Int, action: String, targetFile: File, onResult: (photo: File?) -> Unit) {
+    fun takePicture(activity: Activity, id: Int, action: String, targetFile: File, onResult: (photo: File?) -> Unit) {
         attachCallback(activity, TakePictureCallbackFactory(id, action, targetFile, requireFileProvider)) { _, r -> onResult(r) }
     }
 
-    private fun <R> attachCallback(context: Context, factory: CallbackFactory<R>, callback: (context: Context, r: R) -> Unit) {
+    fun <R> attachCallback(context: Context, factory: CallbackFactory<R>, callback: (context: Context, r: R) -> Unit) {
         factory.createCallback().createAndAttachTo(context, callback)
+    }
+
+    /**
+     * 打开图片选择页面（单选）。页面启动后只能选择图片文件。
+     * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
+     * @param result 选中结果，由于是单选，是有意当用户点击了某个图片的选择框后就会将这个图片回调给你。
+     */
+    fun openPhotoSelectorSingle(fragment: Fragment, result: (photo: Photo?) -> Unit) {
+        fragment.activity?.also { activity ->
+            realOpenSelector<Photo>(activity, AlbumType.PHOTO, 1, ID_SINGLE, result)
+        }
     }
 
     /**
@@ -198,19 +213,22 @@ object PhotoSelector {
      * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
-    fun openPhotoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openPhotoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>?) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != ID_REPEATABLE) {
+            if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
-                if (r) {
-                    attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.PHOTO, maxLength, id)) { _, photos ->
-                        result(photos)
-                    }
-                }
-            }
+            realOpenSelector<List<Photo>>(activity, AlbumType.PHOTO, maxLength, id, result)
         }
+    }
+
+    /**
+     * 打开图片选择页面（单选）。页面启动后只能选择图片文件。
+     * @param context 在Activity中使用时您需要传入当前Activity的实例。
+     * @param result 选中结果，由于是单选，是有意当用户点击了某个图片的选择框后就会将这个图片回调给你。
+     */
+    fun openPhotoSelectorSingle(context: Context, result: (photo: Photo?) -> Unit) {
+        realOpenSelector<Photo>(context, AlbumType.PHOTO, 1, ID_SINGLE, result)
     }
 
     /**
@@ -222,16 +240,21 @@ object PhotoSelector {
      * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
-    fun openPhotoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
-        if (id != ID_REPEATABLE && context is LifecycleOwner) {
+    fun openPhotoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>?) -> Unit) {
+        if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        attachCallback(context, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
-            if (r) {
-                attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.PHOTO, maxLength, id)) { _, photos ->
-                    result(photos)
-                }
-            }
+        realOpenSelector<List<Photo>>(context, AlbumType.PHOTO, maxLength, id, result)
+    }
+
+    /**
+     * 打开视频选择页面（单选）。页面启动后只能选择图片文件。
+     * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
+     * @param result 选中结果，由于是单选，是有意当用户点击了某个视频的选择框后就会将这个视频回调给你。
+     */
+    fun openVideoSelectorSingle(fragment: Fragment, result: (photo: Photo?) -> Unit) {
+        fragment.activity?.also { activity ->
+            realOpenSelector<Photo>(activity, AlbumType.VIDEO, 1, ID_SINGLE, result)
         }
     }
 
@@ -244,19 +267,22 @@ object PhotoSelector {
      * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openVideoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>?) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != ID_REPEATABLE) {
+            if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
-                if (r) {
-                    attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.VIDEO, maxLength, id)) { _, photos ->
-                        result(photos)
-                    }
-                }
-            }
+            realOpenSelector<List<Photo>>(activity, AlbumType.VIDEO, maxLength, id, result)
         }
+    }
+
+    /**
+     * 打开视频选择页面（单选）。页面启动后只能选择图片文件。
+     * @param context 在Activity中使用时您需要传入当前Activity的实例。
+     * @param result 选中结果，由于是单选，是有意当用户点击了某个视频的选择框后就会将这个视频回调给你。
+     */
+    fun openVideoSelectorSingle(context: Context, result: (photo: Photo?) -> Unit) {
+        realOpenSelector<Photo>(context, AlbumType.VIDEO, 1, ID_SINGLE, result)
     }
 
     /**
@@ -268,16 +294,21 @@ object PhotoSelector {
      * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
-        if (id != ID_REPEATABLE && context is LifecycleOwner) {
+    fun openVideoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>?) -> Unit) {
+        if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        attachCallback(context, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
-            if (r) {
-                attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.VIDEO, maxLength, id)) { _, photos ->
-                    result(photos)
-                }
-            }
+        realOpenSelector<List<Photo>>(context, AlbumType.VIDEO, maxLength, id, result)
+    }
+
+    /**
+     * 打开图片视频选择页面（单选）。页面启动后只能选择图片文件。
+     * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
+     * @param result 选中结果，由于是单选，是有意当用户点击了某个图片或视频的选择框后就会将这个图片或视频回调给你。
+     */
+    fun openPictureSelectorSingle(fragment: Fragment, result: (photo: Photo?) -> Unit) {
+        fragment.activity?.also { activity ->
+            realOpenSelector<Photo>(activity, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, result)
         }
     }
 
@@ -290,19 +321,22 @@ object PhotoSelector {
      * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>) -> Unit) {
+    fun openPictureSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>?) -> Unit) {
         fragment.activity?.also { activity ->
-            if (id != ID_REPEATABLE) {
+            if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
-                if (r) {
-                    attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.PHOTO_VIDEO, maxLength, id)) { _, photos ->
-                        result(photos)
-                    }
-                }
-            }
+            realOpenSelector<List<Photo>>(activity, AlbumType.PHOTO_VIDEO, maxLength, id, result)
         }
+    }
+
+    /**
+     * 打开图片视频选择页面（单选）。页面启动后只能选择图片文件。
+     * @param context 在Activity中使用时您需要传入当前Activity的实例。
+     * @param result 选中结果，由于是单选，是有意当用户点击了某个图片或视频的选择框后就会将这个图片或视频回调给你。
+     */
+    fun openPictureSelectorSingle(context: Context, result: (photo: Photo?) -> Unit) {
+        realOpenSelector<Photo>(context, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, result)
     }
 
     /**
@@ -314,13 +348,17 @@ object PhotoSelector {
      * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>) -> Unit) {
-        if (id != ID_REPEATABLE && context is LifecycleOwner) {
+    fun openPictureSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>?) -> Unit) {
+        if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
+        realOpenSelector<List<Photo>>(context, AlbumType.PHOTO_VIDEO, maxLength, id, result)
+    }
+
+    private fun <R> realOpenSelector(context: Context, albumType: AlbumType, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photo: R?) -> Unit) {
         attachCallback(context, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
             if (r) {
-                attachCallback(ctx, SelectPictureCallbackFactory(AlbumType.PHOTO_VIDEO, maxLength, id)) { _, photos ->
+                attachCallback(ctx, SelectPictureCallbackFactory<R>(albumType, maxLength, id)) { _, photos ->
                     result(photos)
                 }
             }

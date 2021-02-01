@@ -1,6 +1,8 @@
 package com.kelin.photoselector.model
 
+import android.content.Context
 import com.kelin.photoselector.PhotoSelector
+import com.kelin.photoselector.R
 
 /**
  * **描述:** 名字转换器
@@ -12,22 +14,22 @@ import com.kelin.photoselector.PhotoSelector
  * **版本:** v 1.0.0
  */
 open class AlbumNameTransformer : NameTransformer {
-    override fun transform(name: String): String {
+    override fun transform(context: Context, name: String): String {
         return when {
             name.equals("camera", true) -> {
-                "相机"
+                context.getString(R.string.kelin_photo_selector_camera)
             }
             name.equals("download", true) -> {
-                "下载"
+                context.getString(R.string.kelin_photo_selector_download)
             }
             name.equals("weixin", true) -> {
-                "微信"
+                context.getString(R.string.kelin_photo_selector_weichat)
             }
             name.equals("screenshots", true) -> {
-                "截屏"
+                context.getString(R.string.kelin_photo_selector_screenshots)
             }
             name.equals(PhotoSelector.DEFAULT_PICTURE_DIR, true) -> {
-                "应用相册"
+                context.getString(R.string.kelin_photo_selector_app_album)
             }
             else -> {
                 name

@@ -28,7 +28,7 @@
 
             <TextView
                 android:id="@+id/tvKelinPhotoSelectorReselect"
-                android:layout_width="?android:attr/actionBarSize"
+                android:layout_width="wrap_content"
                 android:layout_height="?android:attr/actionBarSize"
                 android:layout_alignParentEnd="true"
                 android:layout_alignParentRight="true"
@@ -38,7 +38,8 @@
                 android:paddingTop="6dp"
                 android:paddingEnd="8dp"
                 android:text="@string/kelin_photo_selector_reselect"
-                android:textColor="@android:color/white" />
+                android:textColor="@android:color/white"
+                tools:ignore="RelativeOverlap" />
 
             <TextView
                 android:id="@+id/tvKelinPhotoSelectorPageTitle"
@@ -104,10 +105,12 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="12dp"
                 android:layout_marginLeft="12dp"
+                android:layout_marginEnd="8dp"
+                android:layout_marginRight="8dp"
                 android:gravity="center"
                 android:maxLines="1"
                 android:textColor="@android:color/white"
-                tools:text="全部相册" />
+                tools:text="全部" />
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:layout_width="wrap_content"
@@ -122,20 +125,30 @@
             android:id="@+id/tvKelinPhotoSelectorPreview"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="2"
+            android:layout_weight="1"
             android:gravity="center"
             android:text="@string/kelin_photo_selector_preview"
             android:textColor="@android:color/white" />
 
-        <Button
-            android:id="@+id/btnKelinPhotoSelectorDone"
+        <RelativeLayout
             android:layout_width="0dp"
-            android:layout_height="32dp"
-            android:layout_marginEnd="12dp"
-            android:layout_marginRight="12dp"
-            android:layout_weight="1"
-            android:background="@drawable/selector_kelin_photo_selector_done_button_bg"
-            android:textColor="@color/selector_kelin_photo_done_button_text"
-            tools:text="完成(1/9)" />
+            android:layout_height="wrap_content"
+            android:layout_weight="1">
+
+            <Button
+                android:id="@+id/btnKelinPhotoSelectorDone"
+                android:layout_width="wrap_content"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_marginEnd="12dp"
+                android:layout_marginRight="12dp"
+                android:background="@drawable/selector_kelin_photo_selector_done_button_bg"
+                android:paddingStart="6dp"
+                android:paddingEnd="6dp"
+                android:textAllCaps="false"
+                android:textColor="@color/selector_kelin_photo_done_button_text"
+                tools:text="完成(1/9)" />
+        </RelativeLayout>
     </LinearLayout>
 </LinearLayout>

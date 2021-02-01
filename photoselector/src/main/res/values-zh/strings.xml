@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kelin_photo_selector_preview">预览</string>
+    <string name="kelin_photo_selector_reselect">重选</string>
+    <string name="kelin_photo_selector_selected">已选</string>
+    <string name="kelin_photo_selector_done">完成</string>
+    <string name="kelin_photo_selector_camera">相机</string>
+    <string name="kelin_photo_selector_download">下载</string>
+    <string name="kelin_photo_selector_weichat">微信</string>
+    <string name="kelin_photo_selector_screenshots">截屏</string>
+    <string name="kelin_photo_selector_app_album">应用相册</string>
+    <string name="kelin_photo_selector_pictures">图片</string>
+    <string name="kelin_photo_selector_videos">视频</string>
+    <string name="kelin_photo_selector_pictures_and_videos">图片和视频</string>
+    <string name="kelin_photo_selector_select">选择</string>
+    <string name="kelin_photo_selector_all">全部</string>
+</resources>
