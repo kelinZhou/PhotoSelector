@@ -37,7 +37,7 @@ object PhotoSelector {
     /**
      * 单选图片或视频时的ID。
      */
-    const val ID_SINGLE = -9999
+    internal const val ID_SINGLE = -9999
 
     internal const val DEFAULT_PICTURE_DIR = "photoSelector"
 
