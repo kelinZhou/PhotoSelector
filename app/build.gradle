@@ -10,8 +10,8 @@ android {
         applicationId "com.kelin.photoselector"
         minSdkVersion 16
         targetSdkVersion 29
-        versionCode 92
-        versionName "0.9.2"
+        versionCode 101
+        versionName "1.0.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
