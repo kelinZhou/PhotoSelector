@@ -39,7 +39,7 @@ dependencies {
     //大图预览组件
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view-androidx:3.10.0'
     //6.0以上的动态权限处理
-    implementation 'com.github.kelinZhou:OkPermission:3.2.1'
+    implementation 'com.github.kelinZhou:OkPermission:3.2.2'
     //ViewPager2
     implementation "androidx.viewpager2:viewpager2:1.0.0"
     //ExoPlayer视频播放器

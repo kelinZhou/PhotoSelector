@@ -34,7 +34,10 @@ class PhotoSelectorActivity : AppCompatActivity() {
         private const val PAGE_PREVIEW = 0x02
         private const val PAGE_PLAY_VIDEO = 0x03
 
+        private var PAGE_TARGET = 0
+
         private fun createBaseIntent(context: Context, targetPage: Int): Intent {
+            PAGE_TARGET = targetPage
             return Intent(context, PhotoSelectorActivity::class.java).apply {
                 putExtra(KEY_TARGET_PAGE, targetPage)
             }
@@ -63,7 +66,7 @@ class PhotoSelectorActivity : AppCompatActivity() {
         }
     }
 
-    private val targetPage by lazy { intent.getIntExtra(KEY_TARGET_PAGE, 0) }
+    private val targetPage by lazy { intent.getIntExtra(KEY_TARGET_PAGE, PAGE_TARGET) }
 
     private val isPreViewPage by lazy { targetPage == PAGE_PREVIEW || targetPage == PAGE_PLAY_VIDEO }
 
@@ -80,18 +83,25 @@ class PhotoSelectorActivity : AppCompatActivity() {
         supportActionBar?.hide()
         setContentView(R.layout.activity_kelin_photo_selector_photo_common)
         onCreateContainer().also { fragment ->
-            supportFragmentManager.beginTransaction()
-                .add(R.id.flKelinPhotoSelectorFragmentContainer, fragment, fragment.javaClass.simpleName)
-                .commit()
+            if (fragment != null) {
+                supportFragmentManager.beginTransaction()
+                    .add(R.id.flKelinPhotoSelectorFragmentContainer, fragment, fragment.javaClass.simpleName)
+                    .commit()
+            } else {
+                finish()
+            }
         }
     }
 
-    private fun onCreateContainer(): Fragment {
+    private fun onCreateContainer(): Fragment? {
         return when (targetPage) {
             PAGE_ALBUM -> createFragment<AlbumFragment>()
             PAGE_PREVIEW -> createFragment<PhotoPreviewFragment>()
             PAGE_PLAY_VIDEO -> createFragment<PlayVideoFragment>()
-            else -> throw RuntimeException("Unknown targetPage:${targetPage}!")
+            else -> {
+                RuntimeException("Unknown targetPage:${targetPage}!").printStackTrace()
+                null
+            }
         }
     }
 
