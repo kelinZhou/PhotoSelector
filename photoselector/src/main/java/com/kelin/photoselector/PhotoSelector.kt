@@ -108,7 +108,7 @@ object PhotoSelector {
     /**
      * 拍摄照片。
      * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
-     * @param id    为本次拍照设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片被选择，
+     * @param id    为本次拍照设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Fragment的hashCode，即表示当前Fragment中不允许有重复的图片被选择，
      * 如果你的页面有多张照片需要上传那么本次拍照会在id相同的选择中复显。
      * @param targetFile 拍摄的照片要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
      * @param onResult 拍摄完成的回调，会将照片文件回调给您。
@@ -148,7 +148,7 @@ object PhotoSelector {
     /**
      * 拍摄视频。
      * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
-     * @param id    为本次拍照设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的视频被选择，
+     * @param id    为本次拍照设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Fragment的hashCode，即表示当前Fragment中不允许有重复的视频被选择，
      * 如果你的页面有多个视频需要上传那么本次拍摄会在id相同的选择中复显。
      * @param targetFile 拍摄的视频要存放的临时目标文件，默认为空，如果为空则使用默认的目标路径。如果你需要自己指定则需要传入该值。
      * @param onResult 拍摄完成的回调，会将视频文件回调给您。

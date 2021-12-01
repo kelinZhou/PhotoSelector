@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import android.os.Parcelable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -41,7 +42,7 @@ internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
 
         @Suppress("unchecked_cast")
         fun configurationPreviewIntent(intent: Intent, list: List<Photo>, position: Int = 0) {
-            if (list.first() is Picture) {  //有限使用Parsable可以提高效率。
+            if (list.all { it is Parcelable }) {  //优先使用Parsable可以提高效率。
                 intent.putParcelableArrayListExtra(KEY_PICTURE_URLS_DATA, (list as List<Picture>).let { if (it is ArrayList) it else ArrayList(it) })
             } else {
                 intent.putExtra(KEY_PHOTO_URLS_DATA, list.let { if (it is ArrayList) it else ArrayList(it) })
@@ -73,11 +74,15 @@ internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
         //获取初始化索引，默认为第一个。
         val p = requireArguments().getInt(KEY_SELECTED_POSITION, 0)
         tvKelinPhotoSelectorIndicator.apply {
-            (layoutParams as ViewGroup.MarginLayoutParams).also { lp ->
-                lp.topMargin = context.statusBarOffsetPx
+            if (photos.size > 1) {
+                (layoutParams as ViewGroup.MarginLayoutParams).also { lp ->
+                    lp.topMargin = context.statusBarOffsetPx
+                }
+                //设置图片预览指示器
+                text = "${p + 1}/${photos.size}"
+            } else {
+                visibility = View.GONE
             }
-            //设置图片预览指示器
-            text = "${p + 1}/${photos.size}"
         }
         //初始化ViewPager以及所有子View。
         vpKelinPhotoSelectorPager.run {
