@@ -1,13 +1,14 @@
 package com.kelin.photoselector.callback.factory
 
 import android.app.Activity
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.media.MediaMetadataRetriever
 import android.media.MediaScannerConnection
-import android.os.Handler
-import android.os.Looper
+import android.os.*
 import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.FragmentActivity
 import com.kelin.okpermission.OkActivityResult
 import com.kelin.photoselector.PhotoSelector
@@ -21,6 +22,7 @@ import com.kelin.photoselector.model.toUri
 import com.kelin.photoselector.widget.ProgressDialog
 import com.kelin.photoselector.utils.compressAndRotateByDegree
 import java.io.File
+import java.io.FileInputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -77,7 +79,7 @@ class TakePictureCallbackFactory(private val id: Int, private val action: String
                         if (PhotoSelector.isAutoCompress && !isVideoAction) {
                             picture.compressAndRotateByDegree()
                         }
-                        MediaScannerConnection.scanFile(contextOrNull, arrayOf(targetFile.absolutePath), arrayOf(if (isVideoAction) "video/mp4" else "image/jpeg"), null)
+                        insertToAlbum()
                         onTakePictureFinished(picture)
                     } else {
                         callback(null)
@@ -111,6 +113,39 @@ class TakePictureCallbackFactory(private val id: Int, private val action: String
                     onTakePictureFinished(picture)
                 }, 100)
             }
+        }
+
+
+        private fun insertToAlbum() {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                MediaScannerConnection.scanFile(contextOrNull, arrayOf(targetFile.absolutePath), arrayOf(if (isVideoAction) "video/mp4" else "image/jpeg"), null)
+            } else {
+                contextOrNull?.also { context ->
+                    context.contentResolver.also { resolver ->
+                        val values = getVideoContentValues(targetFile)
+                        resolver.insert(if (isVideoAction) MediaStore.Video.Media.EXTERNAL_CONTENT_URI else MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)?.also { uri ->
+                            resolver.openOutputStream(uri)?.use { os ->
+                                val `is` = FileInputStream(targetFile)
+                                FileUtils.copy(`is`, os)
+                                `is`.close()
+                                os.close()
+                                values.clear()
+                                values.put(MediaStore.Video.Media.IS_PENDING, 0)
+                                resolver.update(uri, values, null, null)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        @RequiresApi(Build.VERSION_CODES.Q)
+        fun getVideoContentValues(file: File): ContentValues {
+            val values = ContentValues()
+            values.put(MediaStore.MediaColumns.DISPLAY_NAME, file.name)
+            values.put(MediaStore.MediaColumns.MIME_TYPE, if (isVideoAction) "video/mp4" else "image/jpeg")
+            values.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DCIM)
+            return values
         }
     }
 }
