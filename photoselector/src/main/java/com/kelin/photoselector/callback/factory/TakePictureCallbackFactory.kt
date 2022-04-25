@@ -46,38 +46,42 @@ class TakePictureCallbackFactory(private val id: Int, private val action: String
     private inner class TakePictureCallback : BaseCallback<File?>() {
         override fun onAttach(context: Context) {
             val intent = Intent(action)
-            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
-            if (targetFile.exists()) {
-                targetFile.delete()
-            } else if (targetFile.parentFile?.exists() == false) {
-                targetFile.parentFile?.mkdirs()
-            }
-            val uri = targetFile.toUri(context, fileProvider)
-            intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
-            OkActivityResult.startActivity(context as Activity, intent) { resultCode ->
-                if (resultCode == Activity.RESULT_OK && targetFile.exists() && contextOrNull != null) {
-                    val duration = if (isVideoAction) {
-                        MediaMetadataRetriever().let { m ->
-                            m.setDataSource(targetFile.absolutePath)
-                            m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
+            // Ensure that there's a camera activity to handle the intent
+            // 官方注释，确保有一个活动来打开相机意图
+            if (intent.resolveActivity(context.packageManager) != null) {
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
+                if (targetFile.exists()) {
+                    targetFile.delete()
+                } else if (targetFile.parentFile?.exists() == false) {
+                    targetFile.parentFile?.mkdirs()
+                }
+                val uri = targetFile.toUri(context, fileProvider)
+                intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
+                OkActivityResult.startActivity(context as Activity, intent) { resultCode ->
+                    if (resultCode == Activity.RESULT_OK && targetFile.exists() && contextOrNull != null) {
+                        val duration = if (isVideoAction) {
+                            MediaMetadataRetriever().let { m ->
+                                m.setDataSource(targetFile.absolutePath)
+                                m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
+                            }
+                        } else {
+                            0
                         }
+                        val picture = Picture(
+                            targetFile.absolutePath,
+                            targetFile.length(),
+                            if (isVideoAction) PictureType.VIDEO else PictureType.PHOTO, duration.formatToDurationString(),
+                            SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date())
+                        )
+                        if (PhotoSelector.isAutoCompress && !isVideoAction) {
+                            picture.compressAndRotateByDegree()
+                        }
+                        MediaScannerConnection.scanFile(contextOrNull, arrayOf(targetFile.absolutePath), arrayOf(if (isVideoAction) "video/mp4" else "image/jpeg"), null)
+                        onTakePictureFinished(picture)
                     } else {
-                        0
+                        callback(null)
                     }
-                    val picture = Picture(
-                        targetFile.absolutePath,
-                        targetFile.length(),
-                        if (isVideoAction) PictureType.VIDEO else PictureType.PHOTO, duration.formatToDurationString(),
-                        SimpleDateFormat("yyyy-MM-dd", Locale.CHINA).format(Date())
-                    )
-                    if (PhotoSelector.isAutoCompress && !isVideoAction) {
-                        picture.compressAndRotateByDegree()
-                    }
-                    MediaScannerConnection.scanFile(contextOrNull, arrayOf(targetFile.absolutePath), arrayOf(if (isVideoAction) "video/mp4" else "image/jpeg"), null)
-                    onTakePictureFinished(picture)
-                } else {
-                    callback(null)
                 }
             }
         }

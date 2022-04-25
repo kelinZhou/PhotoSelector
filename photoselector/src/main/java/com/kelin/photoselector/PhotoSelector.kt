@@ -120,7 +120,7 @@ object PhotoSelector {
             }
             attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE)) { context, granted ->
                 if (granted) {
-                    takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
+                    takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
                 }
             }
         }
@@ -140,7 +140,7 @@ object PhotoSelector {
         }
         attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE)) { context, granted ->
             if (granted) {
-                takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
+                takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.jpg"), onResult)
             }
         }
     }
@@ -160,7 +160,7 @@ object PhotoSelector {
             }
             attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_VIDEO)) { context, granted ->
                 if (granted) {
-                    takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
+                    takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
                 }
             }
         }
@@ -180,7 +180,7 @@ object PhotoSelector {
         }
         attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_VIDEO)) { context, granted ->
             if (granted) {
-                takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${Environment.getExternalStorageDirectory().absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
+                takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_PICTURES)?.absolutePath}/${pictureDir}/", "${System.currentTimeMillis()}.mp4"), onResult)
             }
         }
     }
