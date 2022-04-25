@@ -129,9 +129,6 @@ class TakePictureCallbackFactory(private val id: Int, private val action: String
                                 FileUtils.copy(`is`, os)
                                 `is`.close()
                                 os.close()
-                                values.clear()
-                                values.put(MediaStore.Video.Media.IS_PENDING, 0)
-                                resolver.update(uri, values, null, null)
                             }
                         }
                     }
