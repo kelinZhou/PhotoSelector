@@ -49,11 +49,23 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         private const val KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE = "key_kelin_photo_selector_album_type"
         private const val KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT = "key_kelin_photo_selector_max_count"
         private const val KEY_KELIN_PHOTO_SELECTOR_ID = "key_kelin_photo_selector_id"
+        private const val KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION = "key_kelin_photo_selector_max_duration"
 
-        internal fun configurationPictureSelectorIntent(intent: Intent, albumType: AlbumType, maxLength: Int, id: Int) {
+        /**
+         * 配置选择意图。
+         * @param albumType 相册类型。
+         * @param maxLength 最多可以选择多少个。
+         * @param id 本次选择的唯一ID，应当是与View关联的。
+         * @param maxDuration 选择视频是的最大时长限制，单位秒。
+         */
+        internal fun configurationPictureSelectorIntent(intent: Intent, albumType: AlbumType, maxLength: Int, id: Int, maxDuration: Long) {
             intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_ID, id)
             intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, albumType.type)
             intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxLength)
+            if (maxDuration > 0) {
+                //这里乘以1000是为了转换为毫秒，方便后面做比对。
+                intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, maxDuration * 1000)
+            }
         }
     }
 
@@ -137,7 +149,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                 }
             })
         }
-        LoaderManager.getInstance(this).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext) {
+        LoaderManager.getInstance(this).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext, requireArguments().getLong(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, 0)) {
             albums = it
             val defAlbum = it.find { a -> a.name == sp.getString("kelin_photo_selector_selected_album_name", "") } ?: it.firstOrNull()
             if (defAlbum == null) {

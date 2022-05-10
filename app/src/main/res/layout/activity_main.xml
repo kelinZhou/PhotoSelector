@@ -55,6 +55,13 @@
             android:text="选择视频(多选)"/>
 
         <Button
+            android:id="@+id/btnVideoSelectMaxDuration"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="选择视频(30s)"/>
+
+        <Button
             android:id="@+id/btnPhotoAndVideoSelectSingle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

@@ -43,9 +43,9 @@ class PhotoSelectorActivity : AppCompatActivity() {
             }
         }
 
-        internal fun createPictureSelectorIntent(context: Context, albumType: AlbumType, maxLength: Int, id: Int): Intent {
+        internal fun createPictureSelectorIntent(context: Context, albumType: AlbumType, maxLength: Int, id: Int, maxDuration: Long): Intent {
             return createBaseIntent(context, PAGE_ALBUM).also { intent ->
-                AlbumFragment.configurationPictureSelectorIntent(intent, albumType, maxLength, id)
+                AlbumFragment.configurationPictureSelectorIntent(intent, albumType, maxLength, id, maxDuration)
             }
         }
 

@@ -200,7 +200,7 @@ object PhotoSelector {
      */
     fun openPhotoSelectorSingle(fragment: Fragment, result: (photo: Photo?) -> Unit) {
         fragment.activity?.also { activity ->
-            realOpenSelector<Photo>(activity, AlbumType.PHOTO, 1, ID_SINGLE, result)
+            realOpenSelector<Photo>(activity, AlbumType.PHOTO, 1, ID_SINGLE, 0, result)
         }
     }
 
@@ -218,7 +218,7 @@ object PhotoSelector {
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            realOpenSelector<List<Photo>>(activity, AlbumType.PHOTO, maxLength, id, result)
+            realOpenSelector<List<Photo>>(activity, AlbumType.PHOTO, maxLength, id, 0, result)
         }
     }
 
@@ -228,7 +228,7 @@ object PhotoSelector {
      * @param result 选中结果，由于是单选，是有意当用户点击了某个图片的选择框后就会将这个图片回调给你。
      */
     fun openPhotoSelectorSingle(context: Context, result: (photo: Photo?) -> Unit) {
-        realOpenSelector<Photo>(context, AlbumType.PHOTO, 1, ID_SINGLE, result)
+        realOpenSelector<Photo>(context, AlbumType.PHOTO, 1, ID_SINGLE, 0, result)
     }
 
     /**
@@ -244,17 +244,18 @@ object PhotoSelector {
         if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        realOpenSelector<List<Photo>>(context, AlbumType.PHOTO, maxLength, id, result)
+        realOpenSelector<List<Photo>>(context, AlbumType.PHOTO, maxLength, id, 0, result)
     }
 
     /**
      * 打开视频选择页面（单选）。页面启动后只能选择图片文件。
      * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
+     * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个视频的选择框后就会将这个视频回调给你。
      */
-    fun openVideoSelectorSingle(fragment: Fragment, result: (photo: Photo?) -> Unit) {
+    fun openVideoSelectorSingle(fragment: Fragment, maxDuration: Long = 0, result: (photo: Photo?) -> Unit) {
         fragment.activity?.also { activity ->
-            realOpenSelector<Photo>(activity, AlbumType.VIDEO, 1, ID_SINGLE, result)
+            realOpenSelector<Photo>(activity, AlbumType.VIDEO, 1, ID_SINGLE, maxDuration, result)
         }
     }
 
@@ -265,24 +266,26 @@ object PhotoSelector {
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的视频被选择，
      * 如果当前不是第一次打开视频选择且之前完成过选择(完成是指点击了视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
+     * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>?) -> Unit) {
+    fun openVideoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), maxDuration: Long = 0, result: (photos: List<Photo>?) -> Unit) {
         fragment.activity?.also { activity ->
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            realOpenSelector<List<Photo>>(activity, AlbumType.VIDEO, maxLength, id, result)
+            realOpenSelector<List<Photo>>(activity, AlbumType.VIDEO, maxLength, id, maxDuration, result)
         }
     }
 
     /**
      * 打开视频选择页面（单选）。页面启动后只能选择图片文件。
      * @param context 在Activity中使用时您需要传入当前Activity的实例。
+     * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个视频的选择框后就会将这个视频回调给你。
      */
-    fun openVideoSelectorSingle(context: Context, result: (photo: Photo?) -> Unit) {
-        realOpenSelector<Photo>(context, AlbumType.VIDEO, 1, ID_SINGLE, result)
+    fun openVideoSelectorSingle(context: Context, maxDuration: Long = 0, result: (photo: Photo?) -> Unit) {
+        realOpenSelector<Photo>(context, AlbumType.VIDEO, 1, ID_SINGLE, maxDuration, result)
     }
 
     /**
@@ -292,23 +295,25 @@ object PhotoSelector {
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的视频被选择，
      * 如果当前不是第一次打开视频选择且之前完成过选择(完成是指点击了视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
+     * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>?) -> Unit) {
+    fun openVideoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), maxDuration: Long = 0, result: (photos: List<Photo>?) -> Unit) {
         if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        realOpenSelector<List<Photo>>(context, AlbumType.VIDEO, maxLength, id, result)
+        realOpenSelector<List<Photo>>(context, AlbumType.VIDEO, maxLength, id, maxDuration, result)
     }
 
     /**
      * 打开图片视频选择页面（单选）。页面启动后只能选择图片文件。
      * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
+     * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个图片或视频的选择框后就会将这个图片或视频回调给你。
      */
-    fun openPictureSelectorSingle(fragment: Fragment, result: (photo: Photo?) -> Unit) {
+    fun openPictureSelectorSingle(fragment: Fragment, maxDuration: Long = 0, result: (photo: Photo?) -> Unit) {
         fragment.activity?.also { activity ->
-            realOpenSelector<Photo>(activity, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, result)
+            realOpenSelector<Photo>(activity, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, maxDuration, result)
         }
     }
 
@@ -319,24 +324,26 @@ object PhotoSelector {
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片和视频被选择，
      * 如果当前不是第一次打开图片和视频选择且之前完成过选择(完成是指点击了图片和视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
+     * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>?) -> Unit) {
+    fun openPictureSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), maxDuration: Long = 0, result: (photos: List<Photo>?) -> Unit) {
         fragment.activity?.also { activity ->
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            realOpenSelector<List<Photo>>(activity, AlbumType.PHOTO_VIDEO, maxLength, id, result)
+            realOpenSelector<List<Photo>>(activity, AlbumType.PHOTO_VIDEO, maxLength, id, maxDuration, result)
         }
     }
 
     /**
      * 打开图片视频选择页面（单选）。页面启动后只能选择图片文件。
      * @param context 在Activity中使用时您需要传入当前Activity的实例。
+     * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个图片或视频的选择框后就会将这个图片或视频回调给你。
      */
-    fun openPictureSelectorSingle(context: Context, result: (photo: Photo?) -> Unit) {
-        realOpenSelector<Photo>(context, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, result)
+    fun openPictureSelectorSingle(context: Context, maxDuration: Long = 0, result: (photo: Photo?) -> Unit) {
+        realOpenSelector<Photo>(context, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, maxDuration, result)
     }
 
     /**
@@ -346,19 +353,20 @@ object PhotoSelector {
      * @param id    为本次选择设置一个id，该id是去重逻辑的核心。可以不传，如果不传则默认为当前Activity的hashCode，即表示当前Activity中不允许有重复的图片和视频被选择，
      * 如果当前不是第一次打开图片和视频选择且之前完成过选择(完成是指点击了图片和视频选择页面的完成按钮)，那么之前选择过的视频默认会被勾选(即数据回显)。如果您的页面中有多处需要选择
      * 图片和视频的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
+     * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>?) -> Unit) {
+    fun openPictureSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), maxDuration: Long = 0, result: (photos: List<Photo>?) -> Unit) {
         if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        realOpenSelector<List<Photo>>(context, AlbumType.PHOTO_VIDEO, maxLength, id, result)
+        realOpenSelector<List<Photo>>(context, AlbumType.PHOTO_VIDEO, maxLength, id, maxDuration, result)
     }
 
-    private fun <R> realOpenSelector(context: Context, albumType: AlbumType, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photo: R?) -> Unit) {
+    private fun <R> realOpenSelector(context: Context, albumType: AlbumType, maxLength: Int = defMaxLength, id: Int = context.hashCode(), maxDuration: Long, result: (photo: R?) -> Unit) {
         attachCallback(context, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
             if (r) {
-                attachCallback(ctx, SelectPictureCallbackFactory<R>(albumType, maxLength, id)) { _, photos ->
+                attachCallback(ctx, SelectPictureCallbackFactory<R>(albumType, maxLength, id, maxDuration)) { _, photos ->
                     result(photos)
                 }
             }

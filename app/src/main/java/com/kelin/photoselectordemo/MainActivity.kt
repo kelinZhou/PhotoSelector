@@ -74,6 +74,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        btnVideoSelectMaxDuration.setOnClickListener {
+            PhotoSelector.openVideoSelector(this, maxDuration = 30) { photos ->
+                if (photos.isNullOrEmpty()) {
+                    Toast.makeText(this, "选择已被取消", Toast.LENGTH_SHORT).show()
+                } else {
+                    ImageListActivity.start(this, *photos.map { it.uri }.toTypedArray())
+                }
+            }
+        }
+
         btnPhotoAndVideoSelectSingle.setOnClickListener {
             PhotoSelector.openPictureSelectorSingle(this) { photo ->
                 when {

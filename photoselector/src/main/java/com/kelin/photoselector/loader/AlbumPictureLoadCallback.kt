@@ -31,7 +31,7 @@ import kotlin.collections.ArrayList
  *
  * **版本:** v 1.0.0
  */
-internal class AlbumPictureLoadCallback(private val context: Context, private val onLoaded: (result: List<Album>) -> Unit) : LoaderManager.LoaderCallbacks<Cursor> {
+internal class AlbumPictureLoadCallback(private val context: Context, private val maxDuration:Long, private val onLoaded: (result: List<Album>) -> Unit) : LoaderManager.LoaderCallbacks<Cursor> {
 
     private val dataFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.CHINA) }
 
@@ -94,15 +94,19 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                     0
                 }
                 if (file?.exists() == true && (type == PictureType.PHOTO || size >= 4096)) {
-                    result.add(
-                        Picture(
-                            file.absolutePath,
-                            size,
-                            type,
-                            if (isVideo) duration.formatToDurationString() else "",
-                            dataFormat.format(cursor.getLong(cursor.getColumnIndex(FileColumns.DATE_MODIFIED)) * 1000)
+                    if (!isVideo || maxDuration <= 0 || duration <= maxDuration) {
+                        result.add(
+                            Picture(
+                                file.absolutePath,
+                                size,
+                                type,
+                                if (isVideo) duration.formatToDurationString() else "",
+                                dataFormat.format(cursor.getLong(cursor.getColumnIndex(FileColumns.DATE_MODIFIED)) * 1000)
+                            )
                         )
-                    )
+                    } else {
+                        Log.d("PhotoSelector:", "过滤过长的视频：path=$path, name=$name, duration=${duration.formatToDurationString()}")
+                    }
                 } else {
                     Log.d("PhotoSelector:", "照片或视频读取失败：path=$path, name=$name")
                 }
