@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -47,13 +48,12 @@
         android:layout_alignParentBottom="true"
         android:layout_marginStart="5dp"
         android:layout_marginLeft="5dp"
-        android:drawableStart="@drawable/ic_kelin_photo_selector_video"
-        android:drawableLeft="@drawable/ic_kelin_photo_selector_video"
         android:drawablePadding="6dp"
         android:gravity="center_vertical"
         android:maxLines="1"
         android:paddingBottom="5dp"
         android:textColor="@android:color/white"
         android:textSize="13sp"
-        tools:text="20:12" />
+        tools:text="20:12"
+        app:drawableStartCompat="@drawable/ic_kelin_photo_selector_video" />
 </RelativeLayout>

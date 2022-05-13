@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
+import android.media.MediaMetadataRetriever
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -13,6 +14,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.loader.app.LoaderManager
+import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -22,6 +24,7 @@ import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.R
 import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.loader.AlbumPictureLoadCallback
+import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.Album
 import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.Picture
@@ -32,7 +35,11 @@ import com.kelin.photoselector.widget.AlbumsDialog
 import com.kelin.photoselector.widget.ProgressDialog
 import kotlinx.android.synthetic.main.fragment_kelin_photo_selector_album.*
 import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
+import java.io.File
 import java.io.Serializable
+import java.text.SimpleDateFormat
+import java.util.*
+import kotlin.collections.ArrayList
 
 /**
  * **描述:** 相册页面。
@@ -69,6 +76,8 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         }
     }
 
+    private val dataFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.CHINA) }
+
     override val rootLayoutRes: Int
         get() = R.layout.fragment_kelin_photo_selector_album
 
@@ -78,7 +87,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         applicationContext.getSharedPreferences("${applicationContext.packageName}_photo_selector", Context.MODE_PRIVATE)
     }
 
-    private val selectorId by lazy { requireArguments().getInt(KEY_KELIN_PHOTO_SELECTOR_ID, -1) }
+    private val selectorId by lazy { requireArguments().getInt(KEY_KELIN_PHOTO_SELECTOR_ID, PhotoSelector.ID_REPEATABLE) }
 
     private val justSelectOne by lazy { selectorId == PhotoSelector.ID_SINGLE }
 
@@ -100,7 +109,9 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
 
     private val isSingleSelector by lazy { maxLength == 1 }
 
-    private val listAdapter by lazy { PhotoListAdapter(DistinctManager.instance.getSelected(selectorId, albumType)) }
+    private val listAdapter by lazy {
+        PhotoListAdapter(DistinctManager.instance.getSelected(selectorId, albumType))
+    }
 
     private val listLayoutManager by lazy {
         object : GridLayoutManager(requireContext(), getSpanCount(isLandscape(resources.configuration))) {
@@ -135,6 +146,12 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         rvKelinPhotoSelectorPhotoListView.run {
             layoutManager = listLayoutManager
             adapter = listAdapter
+            itemAnimator = DefaultItemAnimator().apply {
+                addDuration = 0
+                changeDuration = 200
+                removeDuration = 0
+                moveDuration = 0
+            }
             addOnScrollListener(object : RecyclerView.OnScrollListener() {
                 override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                     if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
@@ -145,7 +162,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                 }
 
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    tvKelinPhotoSelectorModifiedDate.text = listAdapter.getItem(listLayoutManager.findFirstVisibleItemPosition()).modifyDate
+                    tvKelinPhotoSelectorModifiedDate.text = listLayoutManager.findFirstVisibleItemPosition().let { listAdapter.getItem(if (it == 0) 1 else it).modifyDate }
                 }
             })
         }
@@ -165,7 +182,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         //重新选择
         tvKelinPhotoSelectorReselect.setOnClickListener {
             listAdapter.clearSelected()
-            updateSelectedCount(0)
+            updateSelectedCount(listAdapter.selectedPictures.size)
         }
         //预览选中图片
         tvKelinPhotoSelectorPreview.setOnClickListener {
@@ -198,11 +215,11 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
     }
 
     @Suppress("UNCHECKED_CAST")
-    private fun getRealResult(selected: ArrayList<Picture>): Serializable? {
+    private fun getRealResult(selected: List<Picture>): Serializable? {
         return if (selectorId == PhotoSelector.ID_SINGLE) {
             selected.firstOrNull()
         } else {
-            selected
+            ArrayList(selected)
         }
     }
 
@@ -248,7 +265,54 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         }
     }
 
-    private inner class PhotoListAdapter(initialSelected: List<Picture>?) : RecyclerView.Adapter<PhotoHolder>() {
+    private fun onPictureSelectedChanged(picture: Picture, isSelected: Boolean) {
+        val selectedPictures = listAdapter.selectedPictures
+        if (isSelected) {
+            if (PhotoSelector.isAutoCompress && !picture.isVideo) {
+                picture.compressAndRotateByDegree()
+            }
+            selectedPictures.add(picture)
+        } else {
+            //取消选中时判断是否是取消的最后一个，如果不是的话那还要刷新其他的条目变更序号。
+            val isLast = picture == selectedPictures.lastOrNull()
+            //获取当前取消的是第几个，一定要在当前资源没有从选中池里面移除的时候获取，否则永远是-1。
+            val currentIndex = selectedPictures.indexOf(picture)
+            selectedPictures.remove(picture)
+            if (!isLast) {
+                selectedPictures.forEachIndexed { i, p ->
+                    if (i >= currentIndex) {
+                        listAdapter.notifyItemChanged(p)
+                    }
+                }
+            }
+        }
+        updateSelectedCount(listAdapter.selectedPictures.size)
+    }
+
+    private fun onPictureTook(picture: File, isVideo: Boolean) {
+        val duration = if (isVideo) {
+            MediaMetadataRetriever().let { m ->
+                m.setDataSource(picture.absolutePath)
+                m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
+            }
+        } else {
+            0
+        }
+        listAdapter.addPicture(
+            Picture(
+                picture.absolutePath,
+                picture.length(),
+                if (isVideo) PictureType.VIDEO else PictureType.PHOTO,
+                if (isVideo) duration.formatToDurationString() else "",
+                dataFormat.format(Date())
+            )
+        )
+        if (isSingleSelector) {
+            onSelectDone()
+        }
+    }
+
+    private inner class PhotoListAdapter(private val initialSelected: List<Picture>?) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         init {
             if (!initialSelected.isNullOrEmpty()) {
@@ -256,79 +320,87 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
             }
         }
 
-        private var photoList: List<Picture>? = null
+        private var photoList: MutableList<Picture> = ArrayList()
 
-        val selectedPictures: ArrayList<Picture> = initialSelected?.let { if (it is ArrayList) it else ArrayList(it) } ?: ArrayList()
-
-        val dataList: List<Picture>
-            get() = photoList ?: emptyList()
+        val selectedPictures: MutableList<Picture> = initialSelected?.toMutableList() ?: ArrayList()
 
         fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
-            photoList = photos
+            photoList.run {
+                clear()
+                addAll(photos)
+            }
             if (refresh) {
                 notifyDataSetChanged()
             }
         }
 
-        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoHolder {
-            return PhotoHolder(
-                LayoutInflater.from(parent.context).inflate(
-                    R.layout.holder_kelin_photo_selector_picture,
-                    parent,
-                    false
-                )
-            )
-        }
-
-        override fun getItemCount(): Int {
-            return photoList?.size ?: 0
-        }
-
-        fun notifyItemChanged(item: Picture) {
-            photoList?.run {
-                notifyItemChanged(indexOf(item))
+        fun addPicture(picture: Picture, refresh: Boolean = true) {
+            photoList.add(0, picture)
+            onPictureSelectedChanged(picture, true)
+            if (refresh) {
+                notifyItemInserted(1)
             }
         }
 
-        fun getItem(position: Int): Picture {
-            return photoList?.get(position)
-                ?: throw NullPointerException("The item must not be null!")
+        override fun getItemViewType(position: Int): Int {
+            return if (position == 0) 0 else 1
         }
 
-        override fun onBindViewHolder(holder: PhotoHolder, position: Int) {
-            val item = getItem(position)
-            holder.itemView.also { iv ->
-                Glide.with(iv.context)
-                    .load(item.uri)
-                    .apply(RequestOptions.centerCropTransform().placeholder(R.drawable.image_placeholder))
-                    .into(iv.ivKelinPhotoSelectorPhotoView)
-                val no = selectedPictures.indexOf(item)
-                iv.rlKelinPhotoSelectorChecker.isSelected = no >= 0
-                iv.pmKelinPhotoSelectorPhotoViewMask.isSelected = no >= 0
-                iv.tvKelinPhotoSelectorChecker.text = if (no >= 0) {
-                    (no + 1).toString()
-                } else {
-                    null
-                }
-                iv.tvKelinPhotoSelectorVideoDuration.apply {
-                    visibility = if (item.type == PictureType.VIDEO) {
-                        text = item.duration
-                        View.VISIBLE
-                    } else {
-                        View.GONE
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+            return if (viewType == 0) {
+                TakePhotoHolder(
+                    LayoutInflater.from(parent.context).inflate(
+                        R.layout.holder_kelin_photo_take_picture,
+                        parent,
+                        false
+                    )
+                )
+            } else {
+                PhotoHolder(
+                    LayoutInflater.from(parent.context).inflate(
+                        R.layout.holder_kelin_photo_selector_picture,
+                        parent,
+                        false
+                    )
+                )
+            }
+        }
+
+        override fun getItemCount(): Int {
+            return photoList.size
+        }
+
+        fun notifyItemChanged(item: Picture) {
+            notifyItemChanged(photoList.indexOf(item) + 1)
+        }
+
+        fun getItem(position: Int): Picture {
+            //减1是减去拍照按钮的位置。
+            return photoList[position - 1]
+        }
+
+        override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+            if (holder is PhotoHolder) {
+                holder.bindData(getItem(position))
+            }
+        }
+
+        fun clearSelected() {
+            selectedPictures.run {
+                if (isNotEmpty()) {
+                    initialSelected?.also { removeAll(it) }
+                    val targetPositions = map { photoList.indexOf(it) }
+                    clear()
+                    initialSelected?.also { addAll(it) }
+                    targetPositions.forEach {
+                        notifyItemChanged(it + 1)
                     }
                 }
             }
         }
 
-        fun clearSelected() {
-            if (selectedPictures.isNotEmpty()) {
-                val targetPositions = selectedPictures.map { photoList!!.indexOf(it) }
-                selectedPictures.clear()
-                targetPositions.forEach {
-                    notifyItemChanged(it)
-                }
-            }
+        fun isInitSelected(data: Picture): Boolean {
+            return initialSelected?.contains(data) == true
         }
     }
 
@@ -336,33 +408,13 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         init {
             itemView.rlKelinPhotoSelectorChecker.setOnClickListener {
                 listAdapter.getItem(layoutPosition).apply {
-                    val selectedPictures = listAdapter.selectedPictures
                     //如果被选中了的资源中没有当前的资源，那么就认为当前用户的目的是选中，否则就是取消选中。
-                    val isSelected = !selectedPictures.contains(this)
+                    val isSelected = !listAdapter.selectedPictures.contains(this)
                     if (isSelected && listAdapter.selectedPictures.size >= maxLength) {
                         Toast.makeText(applicationContext, "最多只能选择${maxLength}${if (albumType == AlbumType.PHOTO) "张" else "个"}$message", Toast.LENGTH_SHORT).show()
                     } else {
-                        if (isSelected) {
-                            if (PhotoSelector.isAutoCompress && !isVideo) {
-                                compressAndRotateByDegree()
-                            }
-                            selectedPictures.add(this)
-                        } else {
-                            //取消选中时判断是否是取消的最后一个，如果不是的话那还要刷新其他的条目变更序号。
-                            val isLast = this == selectedPictures.lastOrNull()
-                            //获取当前取消的是第几个，一定要在当前资源没有从选中池里面已出的时候获取，否则永远是-1。
-                            val currentIndex = selectedPictures.indexOf(this)
-                            selectedPictures.remove(this)
-                            if (!isLast) {
-                                selectedPictures.forEachIndexed { i, p ->
-                                    if (i >= currentIndex) {
-                                        listAdapter.notifyItemChanged(p)
-                                    }
-                                }
-                            }
-                        }
+                        onPictureSelectedChanged(this, isSelected)
                         listAdapter.notifyItemChanged(layoutPosition)
-                        updateSelectedCount(listAdapter.selectedPictures.size)
                     }
                     if (isSingleSelector) {
                         onSelectDone()
@@ -371,6 +423,64 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
             }
             itemView.setOnClickListener {
                 PhotoSelector.openPicturePreviewPage(requireActivity(), listOf(listAdapter.getItem(layoutPosition)))
+            }
+        }
+
+        fun bindData(data: Picture) {
+            itemView.also { iv ->
+                Glide.with(iv.context)
+                    .load(data.uri)
+                    .apply(RequestOptions.centerCropTransform().placeholder(R.drawable.image_placeholder))
+                    .into(iv.ivKelinPhotoSelectorPhotoView)
+                val no = listAdapter.selectedPictures.indexOf(data)
+                iv.pmKelinPhotoSelectorPhotoViewMask.isSelected = no >= 0
+                val canOperation = !listAdapter.isInitSelected(data)
+                iv.tvKelinPhotoSelectorChecker.run {
+                    isSelected = no >= 0
+                    text = if (no >= 0) {
+                        (no + 1).toString()
+                    } else {
+                        null
+                    }
+                    isEnabled = canOperation
+                }
+                iv.rlKelinPhotoSelectorChecker.isEnabled = canOperation
+                iv.tvKelinPhotoSelectorVideoDuration.apply {
+                    visibility = if (data.type == PictureType.VIDEO) {
+                        text = data.duration
+                        View.VISIBLE
+                    } else {
+                        View.GONE
+                    }
+                }
+            }
+        }
+    }
+
+    private inner class TakePhotoHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+        init {
+            itemView.setOnClickListener {
+                if (listAdapter.selectedPictures.size >= maxLength) {
+                    Toast.makeText(applicationContext, "最多只能选择${maxLength}${if (albumType == AlbumType.PHOTO) "张" else "个"}$message", Toast.LENGTH_SHORT).show()
+                } else {
+                    onTakePicture()
+                }
+            }
+        }
+
+        private fun onTakePicture() {
+            if (albumType == AlbumType.VIDEO) {
+                PhotoSelector.takeVideo(this@AlbumFragment) {
+                    if (it != null) {
+                        onPictureTook(it, true)
+                    }
+                }
+            } else {
+                PhotoSelector.takePhoto(this@AlbumFragment) {
+                    if (it != null) {
+                        onPictureTook(it, false)
+                    }
+                }
             }
         }
     }

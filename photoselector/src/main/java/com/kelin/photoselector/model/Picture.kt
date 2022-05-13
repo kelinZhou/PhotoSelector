@@ -89,7 +89,7 @@ internal data class Picture internal constructor(
     )
 
     override fun equals(other: Any?): Boolean {
-        return other != null && other is Picture && other.path == path
+        return other != null && other is Picture && other.name == name && other.type == type && other.modifyDate == modifyDate
     }
 
     override fun hashCode(): Int {

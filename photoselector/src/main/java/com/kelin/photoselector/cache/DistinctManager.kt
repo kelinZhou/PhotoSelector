@@ -25,14 +25,14 @@ internal class DistinctManager private constructor() : CacheOwner<List<Picture>>
     internal fun tryNewCache(id: Int): LifecycleObserver {
         var cache = pool[id]
         if (cache == null) {
-            cache = PhotoCache(id, this)
+            cache = PictureCache(id, this)
             pool.put(id, cache)
         }
         return cache
     }
 
     internal fun getSelected(id: Int, albumType: AlbumType): List<Picture>? {
-        return if (id != -1) {
+        return if (id >= 0) {
             pool[id]?.cache?.let {
                 if (albumType == AlbumType.PHOTO_VIDEO) {
                     it
@@ -46,30 +46,32 @@ internal class DistinctManager private constructor() : CacheOwner<List<Picture>>
     }
 
     internal fun saveSelected(id: Int, selected: List<Picture>) {
-        if (id != -1) {
+        if (id >= 0) {
             pool[id]?.onCache(selected)
         }
     }
 
     internal fun addSelected(id: Int, selected: Picture) {
-        if (id != -1) {
+        if (id >= 0) {
             pool[id]?.addCache(listOf(selected))
         }
     }
 
     internal fun remove(id: Int, position: Int) {
-        if (id != -1) {
+        if (id >= 0) {
             pool[id]?.remove(position)
         }
     }
 
     internal fun remove(id: Int, uri: String) {
-        if (id != -1) {
+        if (id >= 0) {
             pool[id]?.remove(uri)
         }
     }
 
     override fun detach(id: Int) {
-        pool.remove(id)
+        if (id >= 0) {
+            pool.remove(id)
+        }
     }
 }

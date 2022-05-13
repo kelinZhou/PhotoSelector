@@ -101,7 +101,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         btnPhotoAndVideoSelect.setOnClickListener {
-            PhotoSelector.openPictureSelector(this) { photos ->
+            PhotoSelector.openPictureSelector(this, id = PhotoSelector.ID_REPEATABLE) { photos ->
                 if (photos.isNullOrEmpty()) {
                     Toast.makeText(this, "选择已被取消", Toast.LENGTH_SHORT).show()
                 } else {

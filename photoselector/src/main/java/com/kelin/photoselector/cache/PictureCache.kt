@@ -11,7 +11,7 @@ import com.kelin.photoselector.model.Picture
  *
  * **版本:** v 1.0.0
  */
-internal class PhotoCache(private val id: Int, private val owner: CacheOwner<List<Picture>>) : Cache<List<Picture>> {
+internal class PictureCache(private val id: Int, private val owner: CacheOwner<List<Picture>>) : Cache<List<Picture>> {
 
     private var selectedPhotos: MutableList<Picture>? = null
 
