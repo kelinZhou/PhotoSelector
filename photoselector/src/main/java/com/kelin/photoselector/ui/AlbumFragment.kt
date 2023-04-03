@@ -162,7 +162,11 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                 }
 
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    tvKelinPhotoSelectorModifiedDate.text = listLayoutManager.findFirstVisibleItemPosition().let { listAdapter.getItem(if (it == 0) 1 else it).modifyDate }
+                    tvKelinPhotoSelectorModifiedDate.text = if (listAdapter.itemCount - listAdapter.albumOffset > 0) {
+                        listLayoutManager.findFirstVisibleItemPosition().let { listAdapter.getItem(if (it == 0) 1 else it).modifyDate }
+                    } else {
+                        ""
+                    }
                 }
             })
         }

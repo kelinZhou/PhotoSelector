@@ -16,6 +16,6 @@ class App : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        PhotoSelector.init(this,"${packageName}.fileProvider", true, albumTakePictureEnable = false)
+        PhotoSelector.init(this,"${packageName}.fileProvider", true)
     }
 }
