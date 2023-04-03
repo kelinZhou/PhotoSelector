@@ -60,7 +60,7 @@ class TakePictureCallbackFactory(private val id: Int, private val action: String
                 }
                 val uri = targetFile.toUri(context, fileProvider)
                 intent.putExtra(MediaStore.EXTRA_OUTPUT, uri)
-                OkActivityResult.startActivity(context as Activity, intent) { resultCode ->
+                OkActivityResult.startActivityForCode(context as Activity, intent) { resultCode ->
                     if (resultCode == Activity.RESULT_OK && targetFile.exists() && contextOrNull != null) {
                         val duration = if (isVideoAction) {
                             MediaMetadataRetriever().let { m ->

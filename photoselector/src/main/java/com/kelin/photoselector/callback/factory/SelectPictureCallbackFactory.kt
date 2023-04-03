@@ -25,8 +25,8 @@ internal class SelectPictureCallbackFactory<R>(private val albumType: AlbumType,
                 OkActivityResult.startActivity<R>(
                     context as Activity,
                     PhotoSelectorActivity.createPictureSelectorIntent(context, albumType, maxLength, id, maxDuration)
-                ) { resultCode, data ->
-                    if (resultCode == Activity.RESULT_OK && data != null) {
+                ) { data ->
+                    if (data != null) {
                         callback(data)
                     } else {
                         callback(null)
