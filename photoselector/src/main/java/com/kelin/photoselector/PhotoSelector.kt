@@ -59,6 +59,11 @@ object PhotoSelector {
      */
     private var pictureDir: String = DEFAULT_PICTURE_DIR
 
+    /**
+     * 是否在相册中显示拍照按钮。
+     */
+    internal var isAlbumTakePictureEnable: Boolean = true
+
     private val requireFileProvider: String
         get() = fileProvider ?: throw NullPointerException("You need call the init method first to set fileProvider.")
 
@@ -75,11 +80,12 @@ object PhotoSelector {
      * @param autoCompress 是否开启自动压缩，如果开启自动压缩还会同时打开图片自动纠正的功能(针对某些机型(例如小米手机)拍照后图片会歪的问题)。
      * @param maxLength 统一设置选择图片或视频时的最大选择数量。如有特殊情况则可以在具体调用时再行设置。
      */
-    fun init(context: Context, provider: String, autoCompress: Boolean = false, maxLength: Int = 9) {
+    fun init(context: Context, provider: String, autoCompress: Boolean = false, maxLength: Int = 9, albumTakePictureEnable: Boolean = true) {
         cacheDir = context.cacheDir.absolutePath
         defMaxLength = maxLength
         fileProvider = provider
         isAutoCompress = autoCompress
+        isAlbumTakePictureEnable = albumTakePictureEnable
         pictureDir = context.packageName.let {
             val index = it.lastIndexOf(".")
             if (index >= 0 && index < it.length) {

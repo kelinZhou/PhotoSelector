@@ -324,6 +324,9 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
 
         val selectedPictures: MutableList<Picture> = initialSelected?.toMutableList() ?: ArrayList()
 
+        val albumOffset: Int
+            get() = if (PhotoSelector.isAlbumTakePictureEnable) 1 else 0
+
         fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
             photoList.run {
                 clear()
@@ -343,7 +346,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         }
 
         override fun getItemViewType(position: Int): Int {
-            return if (position == 0) 0 else 1
+            return if (position == 0 && PhotoSelector.isAlbumTakePictureEnable) 0 else 1
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -367,16 +370,16 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         }
 
         override fun getItemCount(): Int {
-            return photoList.size
+            return photoList.size + albumOffset
         }
 
         fun notifyItemChanged(item: Picture) {
-            notifyItemChanged(photoList.indexOf(item) + 1)
+            notifyItemChanged(photoList.indexOf(item) + albumOffset)
         }
 
         fun getItem(position: Int): Picture {
             //减1是减去拍照按钮的位置。
-            return photoList[position - 1]
+            return photoList[position - albumOffset]
         }
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
@@ -393,7 +396,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                     clear()
                     initialSelected?.also { addAll(it) }
                     targetPositions.forEach {
-                        notifyItemChanged(it + 1)
+                        notifyItemChanged(it + albumOffset)
                     }
                 }
             }
