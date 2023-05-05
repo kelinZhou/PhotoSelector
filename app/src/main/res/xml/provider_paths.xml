@@ -3,26 +3,19 @@
     tools:ignore="MissingDefaultResource">
     <paths>
         <external-path
-            name="camera_photos"
-            path="" />
-
-        <root-path
-            name="root"
-            path="" />
-        <files-path
-            name="files"
-            path="" />
-
+            name="external"
+            path="." />
+        <external-files-path
+            name="external_files"
+            path="." />
         <cache-path
             name="cache"
-            path="" />
-
-        <external-path
-            name="external"
-            path="" />
-        <external-path name="photos" path=""/>
-
-        <external-files-path name="opensdk_external" path="Images/tmp"/>
-        <root-path name="opensdk_root" path=""/>
+            path="." />
+        <external-cache-path
+            name="external_cache"
+            path="." />
+        <files-path
+            name="files"
+            path="." />
     </paths>
 </resources>

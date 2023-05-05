@@ -3,6 +3,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.kelin.photoselectordemo">
 
+    <queries>
+        <package android:name="com.huawei.camera" />
+    </queries>
+
     <!--网络权限，如果你需要预览网络图片或视频则必须添加改权限-->
     <uses-permission android:name="android.permission.INTERNET" />
     <!--相机权限，拍照、录像时的必要权限-->

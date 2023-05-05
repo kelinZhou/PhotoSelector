@@ -161,6 +161,16 @@ android {
 
 **完成上面两步后就可以开始使用了。整个库的核心类就一个```PhotoSelector``。你只需要使用它的相应方法就能完成相应功能。具体Api如下：**
 
+**注意：**在华为的HarmonyOS中可能会出现无法成功拉起相机的情况：如果出现则在`AndroidManifest.xml`清单文件中加入以下代码：
+```xml
+<manifest
+    ...>
+    <queries>
+        <package android:name="com.huawei.camera" />  //启用华为相机
+    </queries>
+</manifest>
+```
+
 1. 拍摄照片
 ```kotlin
 PhotoSelector.takePhoto(context){
