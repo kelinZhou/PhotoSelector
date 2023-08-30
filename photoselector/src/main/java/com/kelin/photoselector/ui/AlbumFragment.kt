@@ -76,6 +76,9 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         }
     }
 
+    val albumOffset: Int
+        get() = if (PhotoSelector.isAlbumTakePictureEnable) 1 else 0
+
     private val dataFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.CHINA) }
 
     override val rootLayoutRes: Int
@@ -162,14 +165,9 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                 }
 
                 override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    tvKelinPhotoSelectorModifiedDate.text = if (listAdapter.itemCount - listAdapter.albumOffset > 0) {
+                    tvKelinPhotoSelectorModifiedDate.text = if (listAdapter.itemCount - albumOffset > 0) {
                         listLayoutManager.findFirstVisibleItemPosition().let {
-                            val position = if (it == 0) 1 else it
-                            if (listAdapter.itemCount > position) {
-                                listAdapter.getItem(position).modifyDate
-                            } else {
-                                ""
-                            }
+                            listAdapter.getItem(it + albumOffset).modifyDate
                         }
                     } else {
                         ""
@@ -334,9 +332,6 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         private var photoList: MutableList<Picture> = ArrayList()
 
         val selectedPictures: MutableList<Picture> = initialSelected?.toMutableList() ?: ArrayList()
-
-        val albumOffset: Int
-            get() = if (PhotoSelector.isAlbumTakePictureEnable) 1 else 0
 
         fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
             photoList.run {
