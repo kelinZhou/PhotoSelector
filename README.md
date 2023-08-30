@@ -1,4 +1,4 @@
-# PhotoSelector
+# PhotoSelector [![](https://jitpack.io/v/kelinZhou/PhotoSelector.svg)](https://jitpack.io/#kelinZhou/PhotoSelector)
 自定义相册图片、视频视频选择，提供简单好用的自定义相册图片视频选择工具。
 
 ## 简介
