@@ -57,7 +57,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
         )
     }
 
-    @SuppressLint("SdCardPath")
+    @SuppressLint("SdCardPath", "Range")
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onLoadFinished(loader: Loader<Cursor>, cursor: Cursor?) {
         if (cursor != null && cursor.count > 0) {
