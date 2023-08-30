@@ -166,7 +166,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                         listLayoutManager.findFirstVisibleItemPosition().let {
                             val position = if (it == 0) 1 else it
                             if (listAdapter.itemCount > position) {
-                                listAdapter.getItem(if (it == 0) 1 else it).modifyDate
+                                listAdapter.getItem(position).modifyDate
                             } else {
                                 ""
                             }
