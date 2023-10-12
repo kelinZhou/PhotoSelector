@@ -1,10 +1,10 @@
 package com.kelin.photoselector
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
@@ -124,7 +124,7 @@ object PhotoSelector {
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE)) { context, granted ->
+            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR__VIDEO)) { context, granted ->
                 if (granted) {
                     takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath}${File.separator}${pictureDir}${File.separator}", "${System.currentTimeMillis()}.jpg"), onResult)
                 }
@@ -144,7 +144,7 @@ object PhotoSelector {
         if (id != ID_REPEATABLE && id != ID_SINGLE && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE)) { context, granted ->
+        attachCallback(activity, PermissionCallbackFactory(arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.CAMERA))) { context, granted ->
             if (granted) {
                 takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath}${File.separator}${pictureDir}${File.separator}", "${System.currentTimeMillis()}.jpg"), onResult)
             }
@@ -164,7 +164,7 @@ object PhotoSelector {
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_VIDEO)) { context, granted ->
+            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR__VIDEO)) { context, granted ->
                 if (granted) {
                     takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath}${File.separator}${pictureDir}${File.separator}", "${System.currentTimeMillis()}.mp4"), onResult)
                 }
@@ -184,7 +184,7 @@ object PhotoSelector {
         if (id != ID_REPEATABLE && id != ID_SINGLE && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_VIDEO)) { context, granted ->
+        attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR__VIDEO)) { context, granted ->
             if (granted) {
                 takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath}${File.separator}${pictureDir}${File.separator}", "${System.currentTimeMillis()}.mp4"), onResult)
             }
@@ -472,11 +472,7 @@ object PhotoSelector {
      */
     fun playVideoWithSystem(context: Context, photo: Photo) {
         playVideoWithSystem(
-            context, photo.getUri(context) ?: if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N || photo.uri.startsWith("http")) {
-                Uri.parse(photo.uri)
-            } else {
-                Uri.fromFile(File(photo.uri))
-            },
+            context, photo.getUri(),
             MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(photo.uri)) ?: "video/*"
         )
     }

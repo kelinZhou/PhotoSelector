@@ -20,7 +20,7 @@ class PermissionCallbackFactory(private val permissions: Array<String>) : Callba
             override fun onAttach(context: Context) {
                 OkPermission.with(context)
                     .addDefaultPermissions(*permissions)
-                    .checkAndApply { granted, _ ->
+                    .checkAndApply { granted, p ->
                         callback(granted)
                     }
             }

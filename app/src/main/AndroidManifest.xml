@@ -8,15 +8,26 @@
     </queries>
 
     <!--网络权限，如果你需要预览网络图片或视频则必须添加改权限-->
+    <uses-feature
+        android:name="android.hardware.camera"
+        android:required="false" />
+
     <uses-permission android:name="android.permission.INTERNET" />
     <!--相机权限，拍照、录像时的必要权限-->
     <uses-permission android:name="android.permission.CAMERA" />
-    <!--录制视频权限，录像时的必要权限-->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <!--读取外部存储权限，PhotoSelector库中所有功能都会使用到的权限-->
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
     <!--写入外部存储权限，PhotoSelector库中所有功能都会使用到的权限-->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"
+        tools:ignore="ScopedStorage" />
+    <!--访问照片权限-->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <!--访问视频权限-->
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
     <application
         android:name=".App"
@@ -40,7 +51,9 @@
                 android:resource="@xml/provider_paths" />
         </provider>
 
-        <activity android:name=".MainActivity">
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

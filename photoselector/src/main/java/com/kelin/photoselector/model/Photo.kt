@@ -21,16 +21,20 @@ interface Photo : Serializable {
      * 图片或视频的路径，可以是网络上的url，也可以是本地的path。
      */
     val uri: String
+
     /**
      * 是否是视频文件。
      */
     val isVideo: Boolean
 
+    val targetFile: File?
+        get() = if (uri.startsWith("http")) null else File(uri)
+
     /**
      * 图片或视频的Uri，可以是本地的也可以是网络上的。
      * @return 返回有效的Uri，可以返回空，如果返回空将使用url加载视频，建议在7.0及以上的系统中使用FileProvider。
      */
-    fun getUri(context: Context): Uri? {
+    fun getUri(): Uri {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N || !isLocalFile) {
             Uri.parse(uri)
         } else {
@@ -50,9 +54,11 @@ internal fun Long.formatToDurationString(): String {
         this == 0L -> {
             "00:00"
         }
+
         this < 1000 -> {
             "00:01"
         }
+
         else -> {
             ((this + 500) / 1000).let { d ->
                 if (d > 3600) {
@@ -63,6 +69,10 @@ internal fun Long.formatToDurationString(): String {
             }
         }
     }
+}
+
+fun Photo.toUri(context: Context, provider: String = "${context.packageName}.fileProvider"): Uri? {
+    return targetFile?.toUri(context, provider)
 }
 
 
