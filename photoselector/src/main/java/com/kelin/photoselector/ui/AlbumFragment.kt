@@ -56,6 +56,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         private const val KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE = "key_kelin_photo_selector_album_type"
         private const val KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT = "key_kelin_photo_selector_max_count"
         private const val KEY_KELIN_PHOTO_SELECTOR_ID = "key_kelin_photo_selector_id"
+        private const val KEY_KELIN_PHOTO_SELECTOR_MAX_SIZE = "key_kelin_photo_selector_max_size"
         private const val KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION = "key_kelin_photo_selector_max_duration"
 
         /**
@@ -65,13 +66,17 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
          * @param id 本次选择的唯一ID，应当是与View关联的。
          * @param maxDuration 选择视频是的最大时长限制，单位秒。
          */
-        internal fun configurationPictureSelectorIntent(intent: Intent, albumType: AlbumType, maxLength: Int, id: Int, maxDuration: Long) {
+        internal fun configurationPictureSelectorIntent(intent: Intent, albumType: AlbumType, maxLength: Int, id: Int, maxSize: Float, maxDuration: Int) {
             intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_ID, id)
             intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE, albumType.type)
             intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, maxLength)
+            if (maxSize > 0) {
+                //这里转换为字节，方便后面做对比。
+                intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_SIZE, maxSize)
+            }
             if (maxDuration > 0) {
                 //这里乘以1000是为了转换为毫秒，方便后面做比对。
-                intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, maxDuration * 1000)
+                intent.putExtra(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, maxDuration * 1000L)
             }
         }
     }
@@ -175,7 +180,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                 }
             })
         }
-        LoaderManager.getInstance(this).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext, requireArguments().getLong(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, 0)) {
+        LoaderManager.getInstance(this).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext, requireArguments().getFloat(KEY_KELIN_PHOTO_SELECTOR_MAX_SIZE, 0F), requireArguments().getLong(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, 0)) {
             albums = it
             val defAlbum = it.find { a -> a.name == sp.getString("kelin_photo_selector_selected_album_name", "") } ?: it.firstOrNull()
             if (defAlbum == null) {
@@ -214,7 +219,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                 OkActivityResult.setResultData(requireActivity(), getRealResult(selected))
             } else {  //如果压缩没有完成
                 if (needProgress) {  //如果需要进度提示
-                    ProgressDialog().show(requireFragmentManager(), selectorId.toString())
+                    ProgressDialog().show(parentFragmentManager, selectorId.toString())
                 }
                 handler.postDelayed({
                     onSelectDone(false)
@@ -223,7 +228,6 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         }
     }
 
-    @Suppress("UNCHECKED_CAST")
     private fun getRealResult(selected: List<Picture>): Serializable? {
         return if (selectorId == PhotoSelector.ID_SINGLE) {
             selected.firstOrNull()
@@ -333,6 +337,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
 
         val selectedPictures: MutableList<Picture> = initialSelected?.toMutableList() ?: ArrayList()
 
+        @SuppressLint("NotifyDataSetChanged")
         fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
             photoList.run {
                 clear()

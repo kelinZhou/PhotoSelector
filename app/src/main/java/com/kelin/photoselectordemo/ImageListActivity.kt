@@ -62,7 +62,7 @@ class ImageListActivity : AppCompatActivity() {
                         Glide.with(this@ImageListActivity)
                             .load(photo.uri)
                             .transition(DrawableTransitionOptions.withCrossFade())
-                            .apply { RequestOptions.centerCropTransform() }
+                            .apply(RequestOptions.centerCropTransform())
                             .into(iv.ivPhoto)
                         iv.ivPlayVideo.visibility = if (photo.isVideo) {
                             View.VISIBLE
@@ -71,7 +71,6 @@ class ImageListActivity : AppCompatActivity() {
                         }
                     }
                 }
-
             }
         }
     }

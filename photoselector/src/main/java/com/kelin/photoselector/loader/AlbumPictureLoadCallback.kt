@@ -31,7 +31,7 @@ import kotlin.collections.ArrayList
  *
  * **版本:** v 1.0.0
  */
-internal class AlbumPictureLoadCallback(private val context: Context, private val maxDuration:Long, private val onLoaded: (result: List<Album>) -> Unit) : LoaderManager.LoaderCallbacks<Cursor> {
+internal class AlbumPictureLoadCallback(private val context: Context, private val maxSize: Float, private val maxDuration: Long, private val onLoaded: (result: List<Album>) -> Unit) : LoaderManager.LoaderCallbacks<Cursor> {
 
     private val dataFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.CHINA) }
 
@@ -87,6 +87,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                                     m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
                                 }
                             }
+
                             else -> 0
                         }
                     }
@@ -94,7 +95,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                     0
                 }
                 if (file?.exists() == true && (type == PictureType.PHOTO || size >= 4096)) {
-                    if (!isVideo || maxDuration <= 0 || duration <= maxDuration) {
+                    if ((maxSize <= 0 || size.let { (it + 5000) / 10000 / 100F } <= maxSize) && (!isVideo || maxDuration <= 0 || duration <= maxDuration)) {
                         result.add(
                             Picture(
                                 file.absolutePath,
@@ -105,7 +106,7 @@ internal class AlbumPictureLoadCallback(private val context: Context, private va
                             )
                         )
                     } else {
-                        Log.d("PhotoSelector:", "过滤过长的视频：path=$path, name=$name, duration=${duration.formatToDurationString()}")
+                        Log.d("PhotoSelector:", "过滤过大的或过长的图片视频：path=$path, name=$name, maxSize=${size / 1000000F}MB, duration=${duration.formatToDurationString()}")
                     }
                 } else {
                     Log.d("PhotoSelector:", "照片或视频读取失败：path=$path, name=$name")

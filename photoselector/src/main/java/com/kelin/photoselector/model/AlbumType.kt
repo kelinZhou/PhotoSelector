@@ -11,7 +11,7 @@ import android.provider.MediaStore.Files.FileColumns
  *
  * **版本:** v 1.0.0
  */
-internal enum class AlbumType(val type: Int, val query: String) {
+enum class AlbumType(val type: Int, val query: String) {
     /**
      * 照片相册。
      */

@@ -1,11 +1,14 @@
 package com.kelin.photoselector.model
 
 import android.content.Context
+import android.database.Cursor
 import android.net.Uri
 import android.os.Build
+import android.provider.MediaStore
 import androidx.core.content.FileProvider
 import java.io.File
 import java.io.Serializable
+
 
 /**
  * **描述:** 图片。
@@ -27,6 +30,9 @@ interface Photo : Serializable {
      */
     val isVideo: Boolean
 
+    /**
+     * 获取目标文件，如果当前是一个网络文件则会返回null，如果是本地文件则会返回File。
+     */
     val targetFile: File?
         get() = if (uri.startsWith("http")) null else File(uri)
 
@@ -81,5 +87,23 @@ fun File.toUri(context: Context, provider: String = "${context.packageName}.file
         FileProvider.getUriForFile(context, provider, this)
     } else {
         Uri.fromFile(this)
+    }
+}
+
+fun Uri?.toPhoto(context: Context, isVideo: Boolean? = null): Photo? {
+    return this?.let { uri ->
+        var realPath = ""
+        var cursor: Cursor? = null
+        try {
+            val projection = arrayOf(MediaStore.Images.Media.DATA)
+            cursor = context.contentResolver.query(uri, projection, null, null, null)
+            if (cursor != null && cursor.moveToFirst()) {
+                val columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA)
+                realPath = cursor.getString(columnIndex)
+            }
+        } finally {
+            cursor?.close()
+        }
+        PhotoImpl(realPath, isVideo)
     }
 }

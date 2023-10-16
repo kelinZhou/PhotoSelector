@@ -26,5 +26,5 @@ open class PhotoImpl(
      * 是否是视频文件。
      */
     override val isVideo: Boolean
-        get() = video ?: Pattern.compile("(3gp|mp4|flv|avi|rm|rmvb|wmv)").matcher(uri).find()
+        get() = video ?: Pattern.compile("\\.(3gp|mp4|flv|avi|rm|rmvb|wmv|ts|webm|mkv)\$").matcher(uri).find()
 }

@@ -28,6 +28,8 @@
 
 ## 更新
 
+### 3.0.0 适配Android12，支持系统相册以及支持过滤文件大小(系统相册暂不支持)。
+
 ### 2.0.4 修复相册为空时会角标越界的问题。
 
 ### 2.0.2 修复部分机型可能会在打开相册后闪退的Bug。
@@ -157,12 +159,19 @@ android {
 <uses-permission android:name="android.permission.INTERNET" />
 <!--相机权限，拍照、录像时的必要权限-->
 <uses-permission android:name="android.permission.CAMERA" />
-<!--录制视频权限，录像时的必要权限-->
-<uses-permission android:name="android.permission.RECORD_AUDIO" />
 <!--读取外部存储权限，PhotoSelector库中所有功能都会使用到的权限-->
-<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+<uses-permission
+    android:name="android.permission.READ_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32" />
 <!--写入外部存储权限，PhotoSelector库中所有功能都会使用到的权限-->
-<uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+<uses-permission
+    android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+    android:maxSdkVersion="32"
+    tools:ignore="ScopedStorage" />
+<!--访问照片权限-->
+<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+<!--访问视频权限-->
+<uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 ```
 
 **完成上面两步后就可以开始使用了。整个库的核心类就一个```PhotoSelector``。你只需要使用它的相应方法就能完成相应功能。具体Api如下：**
@@ -200,36 +209,91 @@ PhotoSelector.takeVideo(context){
 ```
 
 3. 选择图片
+使用自定义相册
 ```kotlin
-PhotoSelector.openPhotoSelector(context) { photos ->
-    if (photos.isEmpty()) {
-        Toast.makeText(context, "选择已被取消", Toast.LENGTH_SHORT).show()
-    } else {
-        //do something…
-    }
+PhotoSelector.withSelectorAlbum(activity, AlbumType.PHOTO) { 
+   selectId = activity.hashCode() //设置过滤条件，当前Activity中不能选择重复的图片，仅自定义相册支持。
+   maxSize = 5F //设置过滤大于5M的图片，仅自定义相册支持。
+   selectAll(9){ photos ->
+      if (photos.isEmpty()) {
+         Toast.makeText(context, "选择已被取消", Toast.LENGTH_SHORT).show()
+      } else {
+         //do something…
+      }
+   }
+}
+```
+使用系统相册
+```kotlin
+PhotoSelector.withSysAlbum(activity, AlbumType.PHOTO) {
+   selectAll(9){ photos ->
+      if (photos.isEmpty()) {
+         Toast.makeText(context, "选择已被取消", Toast.LENGTH_SHORT).show()
+      } else {
+         //do something…
+      }
+   }
 }
 ```
 
 4. 选择视频
+使用自定义相册
 ```kotlin
-PhotoSelector.openVideoSelector(context) { photos ->
-    if (photos.isEmpty()) {
-        Toast.makeText(context, "选择已被取消", Toast.LENGTH_SHORT).show()
-    } else {
-        //do something…
+PhotoSelector.withSelectorAlbum(activity, AlbumType.VIDEO) {
+   maxDuration = 30  //过滤所有视频长度超过30秒的视频，仅自定义相册支持。
+   maxSize = 20 //设置过滤大于20M的视频，仅自定义相册支持。
+   selectAll(9){ photos ->
+       if (photos.isEmpty()) {
+          Toast.makeText(context, "选择已被取消", Toast.LENGTH_SHORT).show()
+       } else {
+          //do something…
+       }
     }
+}
+```
+使用系统相册
+```kotlin
+PhotoSelector.withSysAlbum(activity, AlbumType.VIDEO) {
+   selectAll(9){ photos ->
+      if (photos.isEmpty()) {
+         Toast.makeText(context, "选择已被取消", Toast.LENGTH_SHORT).show()
+      } else {
+         //do something…
+      }
+   }
 }
 ```
 5. 选择图片和视频
+图片和视频同时选择时与仅选择图片或视频是的使用方法一致，仅需要把`AlbumType`设置为`AlbumType.PHOTO_VIDEO`即可。
+
+6. 单选
+很多使用选择图片仅需要单选，单选时不要调用`selectAll`方法，而是调用`select`方法，下面已选择图片举例：
+
+使用自定义相册
 ```kotlin
-PhotoSelector.openPictureSelector(context) { photos ->
-    if (photos.isEmpty()) {
-        Toast.makeText(context, "选择已被取消", Toast.LENGTH_SHORT).show()
-    } else {
-        //do something…
-    }
+PhotoSelector.withSelectorAlbum(activity, AlbumType.PHOTO) { 
+   select{ photo ->
+      if (photo == null) {
+         Toast.makeText(context, "选择已被取消", Toast.LENGTH_SHORT).show()
+      } else {
+         //do something…
+      }
+   }
 }
 ```
+使用系统相册
+```kotlin
+PhotoSelector.withSysAlbum(activity, AlbumType.PHOTO) { 
+   select{ photo ->
+      if (photo == null) {
+         Toast.makeText(context, "选择已被取消", Toast.LENGTH_SHORT).show()
+      } else {
+         //do something…
+      }
+   }
+}
+```
+
 6. 图片或视频预览，支持本地图片已经网络图片。
 ```kotlin
 PhotoSelector.openPicturePreviewPage(

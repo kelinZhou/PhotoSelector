@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView  xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:overScrollMode="never"
     android:scrollbars="none">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="center"
+        android:orientation="vertical"
         tools:context=".MainActivity">
 
         <Button
@@ -34,6 +35,13 @@
             android:text="选择图片(单选)" />
 
         <Button
+            android:id="@+id/btnPhotoSelectSingle2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="选择图片(单选/系统相册)" />
+
+        <Button
             android:id="@+id/btnPhotoSelect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -41,46 +49,54 @@
             android:text="选择图片(多选)" />
 
         <Button
+            android:id="@+id/btnPhotoSelect2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="选择图片(多选/系统相册)" />
+
+        <Button
             android:id="@+id/btnVideoSelectSingle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="选择视频(单选)"/>
+            android:text="选择视频(单选)" />
 
         <Button
             android:id="@+id/btnVideoSelect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="选择视频(多选)"/>
+            android:text="选择视频(多选)" />
 
         <Button
             android:id="@+id/btnVideoSelectMaxDuration"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="选择视频(30s)"/>
+            android:text="选择视频(30s And 15MB)" />
 
         <Button
             android:id="@+id/btnPhotoAndVideoSelectSingle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="选择图片和视频(单选)"/>
+            android:text="选择图片和视频(单选)" />
 
         <Button
             android:id="@+id/btnPhotoAndVideoSelect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="选择图片和视频(多选、可重复)"/>
+            android:text="选择图片和视频(多选、可重复)" />
 
         <Button
             android:id="@+id/btnPreviewPictures"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
-            android:text="网络图片视频预览"/>
+            android:layout_marginBottom="20dp"
+            android:text="网络图片视频预览" />
 
 
     </LinearLayout>

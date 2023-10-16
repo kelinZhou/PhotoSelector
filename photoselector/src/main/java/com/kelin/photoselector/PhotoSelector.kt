@@ -5,9 +5,11 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.webkit.MimeTypeMap
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.LifecycleOwner
 import com.kelin.okpermission.OkPermission
@@ -16,7 +18,13 @@ import com.kelin.photoselector.callback.factory.*
 import com.kelin.photoselector.callback.factory.SelectPictureCallbackFactory
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.AlbumType
+import com.kelin.photoselector.option.SelectorAlbumOption
+import com.kelin.photoselector.option.SystemAlbumOption
 import java.io.File
+
+typealias SinglePhotoCallback = (photo: Photo?) -> Unit
+
+typealias MutablePhotoCallabck = (photos: List<Photo>?) -> Unit
 
 /**
  * **描述:** 图片选择器核心类。
@@ -144,7 +152,7 @@ object PhotoSelector {
         if (id != ID_REPEATABLE && id != ID_SINGLE && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        attachCallback(activity, PermissionCallbackFactory(arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.CAMERA))) { context, granted ->
+        attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR__VIDEO)) { context, granted ->
             if (granted) {
                 takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath}${File.separator}${pictureDir}${File.separator}", "${System.currentTimeMillis()}.jpg"), onResult)
             }
@@ -204,9 +212,10 @@ object PhotoSelector {
      * @param fragment 在Fragment中使用时无需Activity实例，只需传入当前的Fragment实例即可。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个图片的选择框后就会将这个图片回调给你。
      */
-    fun openPhotoSelectorSingle(fragment: Fragment, result: (photo: Photo?) -> Unit) {
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(fragment, AlbumType.PHOTO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openPhotoSelectorSingle(fragment: Fragment, result: SinglePhotoCallback) {
         fragment.activity?.also { activity ->
-            realOpenSelector<Photo>(activity, AlbumType.PHOTO, 1, ID_SINGLE, 0, result)
+            realOpenSelector<Photo>(activity, false, AlbumType.PHOTO, 1, ID_SINGLE, 0F, 0, result)
         }
     }
 
@@ -219,12 +228,13 @@ object PhotoSelector {
      * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
-    fun openPhotoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: (photos: List<Photo>?) -> Unit) {
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(fragment, AlbumType.PHOTO){\nselectAll(maxLength) { photos ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openPhotoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), result: MutablePhotoCallabck) {
         fragment.activity?.also { activity ->
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            realOpenSelector<List<Photo>>(activity, AlbumType.PHOTO, maxLength, id, 0, result)
+            realOpenSelector<List<Photo>>(activity, false, AlbumType.PHOTO, maxLength, id, 0F, 0, result)
         }
     }
 
@@ -233,8 +243,9 @@ object PhotoSelector {
      * @param context 在Activity中使用时您需要传入当前Activity的实例。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个图片的选择框后就会将这个图片回调给你。
      */
-    fun openPhotoSelectorSingle(context: Context, result: (photo: Photo?) -> Unit) {
-        realOpenSelector<Photo>(context, AlbumType.PHOTO, 1, ID_SINGLE, 0, result)
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(context, AlbumType.PHOTO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openPhotoSelectorSingle(context: Context, result: SinglePhotoCallback) {
+        realOpenSelector<Photo>(context, false, AlbumType.PHOTO, 1, ID_SINGLE, 0F, 0, result)
     }
 
     /**
@@ -246,11 +257,12 @@ object PhotoSelector {
      * 图片的地方且去重逻辑互不影响，那么您需要手动为每一处的打开设置不同的id。如果您不希望开启自动去重的功能，那么您可以将该参数设置为ID_REPEATABLE。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片(包括数据回显选中的图片)回调给您。
      */
-    fun openPhotoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: (photos: List<Photo>?) -> Unit) {
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(context, AlbumType.PHOTO){\nselectAll(maxLength) { photos ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openPhotoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), result: MutablePhotoCallabck) {
         if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        realOpenSelector<List<Photo>>(context, AlbumType.PHOTO, maxLength, id, 0, result)
+        realOpenSelector<List<Photo>>(context, false, AlbumType.PHOTO, maxLength, id, 0F, 0, result)
     }
 
     /**
@@ -259,9 +271,10 @@ object PhotoSelector {
      * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个视频的选择框后就会将这个视频回调给你。
      */
-    fun openVideoSelectorSingle(fragment: Fragment, maxDuration: Long = 0, result: (photo: Photo?) -> Unit) {
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(fragment, AlbumType.VIDEO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openVideoSelectorSingle(fragment: Fragment, maxDuration: Int = 0, result: SinglePhotoCallback) {
         fragment.activity?.also { activity ->
-            realOpenSelector<Photo>(activity, AlbumType.VIDEO, 1, ID_SINGLE, maxDuration, result)
+            realOpenSelector<Photo>(activity, false, AlbumType.VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
         }
     }
 
@@ -275,12 +288,13 @@ object PhotoSelector {
      * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), maxDuration: Long = 0, result: (photos: List<Photo>?) -> Unit) {
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(fragment, AlbumType.VIDEO){\nselectAll(maxLength) { photos ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openVideoSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), maxDuration: Int = 0, result: MutablePhotoCallabck) {
         fragment.activity?.also { activity ->
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            realOpenSelector<List<Photo>>(activity, AlbumType.VIDEO, maxLength, id, maxDuration, result)
+            realOpenSelector<List<Photo>>(activity, false, AlbumType.VIDEO, maxLength, id, 0F, maxDuration, result)
         }
     }
 
@@ -290,8 +304,9 @@ object PhotoSelector {
      * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个视频的选择框后就会将这个视频回调给你。
      */
-    fun openVideoSelectorSingle(context: Context, maxDuration: Long = 0, result: (photo: Photo?) -> Unit) {
-        realOpenSelector<Photo>(context, AlbumType.VIDEO, 1, ID_SINGLE, maxDuration, result)
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(context, AlbumType.VIDEO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openVideoSelectorSingle(context: Context, maxDuration: Int = 0, result: SinglePhotoCallback) {
+        realOpenSelector<Photo>(context, false, AlbumType.VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
     }
 
     /**
@@ -304,11 +319,12 @@ object PhotoSelector {
      * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有视频(包括数据回显选中的视频)回调给您。
      */
-    fun openVideoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), maxDuration: Long = 0, result: (photos: List<Photo>?) -> Unit) {
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(context, AlbumType.VIDEO){\nselectAll(maxLength) { photos ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openVideoSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), maxDuration: Int = 0, result: MutablePhotoCallabck) {
         if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        realOpenSelector<List<Photo>>(context, AlbumType.VIDEO, maxLength, id, maxDuration, result)
+        realOpenSelector<List<Photo>>(context, false, AlbumType.VIDEO, maxLength, id, 0F, maxDuration, result)
     }
 
     /**
@@ -317,9 +333,10 @@ object PhotoSelector {
      * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个图片或视频的选择框后就会将这个图片或视频回调给你。
      */
-    fun openPictureSelectorSingle(fragment: Fragment, maxDuration: Long = 0, result: (photo: Photo?) -> Unit) {
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(fragment, AlbumType.PHOTO_VIDEO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openPictureSelectorSingle(fragment: Fragment, maxDuration: Int = 0, result: SinglePhotoCallback) {
         fragment.activity?.also { activity ->
-            realOpenSelector<Photo>(activity, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, maxDuration, result)
+            realOpenSelector<Photo>(activity, false, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
         }
     }
 
@@ -333,12 +350,13 @@ object PhotoSelector {
      * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), maxDuration: Long = 0, result: (photos: List<Photo>?) -> Unit) {
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(fragment, AlbumType.PHOTO_VIDEO){\nselectAll(maxLength) { photos ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openPictureSelector(fragment: Fragment, maxLength: Int = defMaxLength, id: Int = fragment.hashCode(), maxDuration: Int = 0, result: MutablePhotoCallabck) {
         fragment.activity?.also { activity ->
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            realOpenSelector<List<Photo>>(activity, AlbumType.PHOTO_VIDEO, maxLength, id, maxDuration, result)
+            realOpenSelector<List<Photo>>(activity, false, AlbumType.PHOTO_VIDEO, maxLength, id, 0F, maxDuration, result)
         }
     }
 
@@ -348,8 +366,9 @@ object PhotoSelector {
      * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，由于是单选，是有意当用户点击了某个图片或视频的选择框后就会将这个图片或视频回调给你。
      */
-    fun openPictureSelectorSingle(context: Context, maxDuration: Long = 0, result: (photo: Photo?) -> Unit) {
-        realOpenSelector<Photo>(context, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, maxDuration, result)
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(context, AlbumType.PHOTO_VIDEO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openPictureSelectorSingle(context: Context, maxDuration: Int = 0, result: SinglePhotoCallback) {
+        realOpenSelector<Photo>(context, false, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
     }
 
     /**
@@ -362,18 +381,90 @@ object PhotoSelector {
      * @param maxDuration 最大时长显示，当选择视频是，该参数用于限制选择的最大视频时长，单位秒，0表示不限制时长，默认不限制。
      * @param result 选中结果，当用户点击了完成按钮后会将用户已经勾选的所有图片和视频(包括数据回显选中的图片和视频)回调给您。
      */
-    fun openPictureSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), maxDuration: Long = 0, result: (photos: List<Photo>?) -> Unit) {
+    @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(context, AlbumType.PHOTO_VIDEO){\nselectAll(maxLength) { photos ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
+    fun openPictureSelector(context: Context, maxLength: Int = defMaxLength, id: Int = context.hashCode(), maxDuration: Int = 0, result: MutablePhotoCallabck) {
         if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        realOpenSelector<List<Photo>>(context, AlbumType.PHOTO_VIDEO, maxLength, id, maxDuration, result)
+        realOpenSelector<List<Photo>>(context, false, AlbumType.PHOTO_VIDEO, maxLength, id, 0F, maxDuration, result)
     }
 
-    private fun <R> realOpenSelector(context: Context, albumType: AlbumType, maxLength: Int = defMaxLength, id: Int = context.hashCode(), maxDuration: Long, result: (photo: R?) -> Unit) {
-        attachCallback(context, PermissionCallbackFactory(OkPermission.permission_group.EXTERNAL_STORAGE)) { ctx, r ->
+    /**
+     * 使用系统相册。
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun withSysAlbum(context: Context, album: AlbumType, option: SystemAlbumOption.() -> Unit) {
+        option(SystemAlbumOption(context, album))
+    }
+
+    /**
+     * 使用系统相册。
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun withSysAlbum(context: Context, album: AlbumType): SystemAlbumOption {
+        return SystemAlbumOption(context, album)
+    }
+
+    /**
+     * 使用系统相册。
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun withSysAlbum(fragment: Fragment, album: AlbumType, option: SystemAlbumOption.() -> Unit) {
+        fragment.activity?.also { option(SystemAlbumOption(it, album)) }
+    }
+
+    /**
+     * 使用系统相册。
+     */
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    fun withSysAlbum(fragment: Fragment, album: AlbumType): SystemAlbumOption? {
+        return fragment.activity?.let { SystemAlbumOption(it, album) }
+    }
+
+    /**
+     * 使用自定义相册。
+     */
+    fun withSelectorAlbum(context: Context, album: AlbumType, option: SelectorAlbumOption.() -> Unit) {
+        option(SelectorAlbumOption(context, album))
+    }
+
+    /**
+     * 使用自定义相册。
+     */
+    fun withSelectorAlbum(context: Context, album: AlbumType): SelectorAlbumOption {
+        return SelectorAlbumOption(context, album)
+    }
+
+    /**
+     * 使用自定义相册。
+     */
+    fun withSelectorAlbum(fragment: Fragment, album: AlbumType, option: SelectorAlbumOption.() -> Unit) {
+        fragment.activity?.also { option(SelectorAlbumOption(it, album)) }
+    }
+
+    /**
+     * 使用自定义相册。
+     */
+    fun withSelectorAlbum(fragment: Fragment, album: AlbumType): SelectorAlbumOption? {
+        return fragment.activity?.let { SelectorAlbumOption(it, album) }
+    }
+
+    internal fun <R> realOpenSelector(context: Context, useSys: Boolean, albumType: AlbumType, maxLength: Int, id: Int, maxSize: Float, maxDuration: Int, result: (photo: R?) -> Unit) {
+        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+        } else {
+            OkPermission.permission_group.EXTERNAL_STORAGE
+        }
+        attachCallback(context, PermissionCallbackFactory(permission)) { ctx, r ->
             if (r) {
-                attachCallback(ctx, SelectPictureCallbackFactory<R>(albumType, maxLength, id, maxDuration)) { _, photos ->
-                    result(photos)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && useSys) {
+                    attachCallback(ctx, Android12SelectPictureCallbackFactory<R>(albumType, maxLength)) { _, photos ->
+                        result(photos)
+                    }
+                } else {
+                    attachCallback(ctx, SelectPictureCallbackFactory<R>(albumType, maxLength, id, maxSize, maxDuration)) { _, photos ->
+                        result(photos)
+                    }
                 }
             }
         }
