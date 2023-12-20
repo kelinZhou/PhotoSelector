@@ -18,7 +18,6 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         btnTakePhoto.setOnClickListener {
             PhotoSelector.takePhoto(this) {
                 if (it != null) {

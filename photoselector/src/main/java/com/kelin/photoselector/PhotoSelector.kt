@@ -132,7 +132,7 @@ object PhotoSelector {
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR__VIDEO)) { context, granted ->
+            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR_VIDEO)) { context, granted ->
                 if (granted) {
                     takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath}${File.separator}${pictureDir}${File.separator}", "${System.currentTimeMillis()}.jpg"), onResult)
                 }
@@ -152,7 +152,7 @@ object PhotoSelector {
         if (id != ID_REPEATABLE && id != ID_SINGLE && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR__VIDEO)) { context, granted ->
+        attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR_VIDEO)) { context, granted ->
             if (granted) {
                 takePicture(context as Activity, id, MediaStore.ACTION_IMAGE_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath}${File.separator}${pictureDir}${File.separator}", "${System.currentTimeMillis()}.jpg"), onResult)
             }
@@ -172,7 +172,7 @@ object PhotoSelector {
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR__VIDEO)) { context, granted ->
+            attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR_VIDEO)) { context, granted ->
                 if (granted) {
                     takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath}${File.separator}${pictureDir}${File.separator}", "${System.currentTimeMillis()}.mp4"), onResult)
                 }
@@ -192,7 +192,7 @@ object PhotoSelector {
         if (id != ID_REPEATABLE && id != ID_SINGLE && activity is LifecycleOwner) {
             activity.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR__VIDEO)) { context, granted ->
+        attachCallback(activity, PermissionCallbackFactory(OkPermission.permission_group.CAMERA_FOR_PICTURE_OR_VIDEO)) { context, granted ->
             if (granted) {
                 takePicture(context as Activity, id, MediaStore.ACTION_VIDEO_CAPTURE, targetFile ?: File("${context.getExternalFilesDir(Environment.DIRECTORY_DCIM)?.absolutePath}${File.separator}${pictureDir}${File.separator}", "${System.currentTimeMillis()}.mp4"), onResult)
             }
