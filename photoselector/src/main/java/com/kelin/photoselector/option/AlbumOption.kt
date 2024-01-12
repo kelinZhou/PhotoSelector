@@ -48,7 +48,15 @@ open class SelectorAlbumOption internal constructor(
     var maxDuration: Int = 0
 ) : SelectorOption {
     override val permissions: Array<String>
-        get() = OkPermission.permission_group.EXTERNAL_STORAGE
+        get() =  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when (album) {
+                AlbumType.PHOTO -> arrayOf(Manifest.permission.READ_MEDIA_IMAGES)
+                AlbumType.VIDEO -> arrayOf(Manifest.permission.READ_MEDIA_VIDEO)
+                AlbumType.PHOTO_VIDEO -> arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
+            }
+        } else {
+            OkPermission.permission_group.EXTERNAL_STORAGE
+        }
 }
 
 /**
