@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdk 34
+    compileSdk 33
 
     buildFeatures{
         viewBinding true
@@ -15,6 +15,7 @@ android {
         versionCode 101
         versionName "1.0.1"
 
+        multiDexEnabled true
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
     signingConfigs {
