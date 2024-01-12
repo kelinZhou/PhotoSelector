@@ -87,6 +87,13 @@ tasks.register('javadocJar', Jar) {
     from javadoc.getDestinationDir()
 }
 
+afterEvaluate{
+    artifacts {
+        archives sourcesJar
+        archives javadocJar
+    }
+}
+
 artifacts {
     archives sourcesJar
     archives javadocJar
