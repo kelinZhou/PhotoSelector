@@ -8,12 +8,15 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.PlaybackException
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory
+import com.google.android.exoplayer2.upstream.DefaultDataSource
 import com.google.android.exoplayer2.util.EventLogger
-import com.kelin.photoselector.R
-import kotlinx.android.synthetic.main.fragment_kelin_photo_selector_play_video.view.*
+import com.google.android.exoplayer2.util.Log
+import com.kelin.photoselector.databinding.FragmentKelinPhotoSelectorPlayVideoBinding
 import java.io.File
 
 /**
@@ -25,7 +28,7 @@ import java.io.File
  *
  * **版本:** v 1.0.0
  */
-internal class PlayVideoFragment : BasePhotoSelectorFragment() {
+internal class PlayVideoFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelectorPlayVideoBinding>() {
 
     companion object {
 
@@ -36,7 +39,7 @@ internal class PlayVideoFragment : BasePhotoSelectorFragment() {
         }
     }
 
-    private var player: ExoPlayer? = null
+    private val exoPlayer: ExoPlayer by lazy { ExoPlayer.Builder(requireContext()).build() }
     /**
      * 用来记录用户是否手动按下了暂停按钮。
      */
@@ -54,57 +57,71 @@ internal class PlayVideoFragment : BasePhotoSelectorFragment() {
         } ?: throw NullPointerException("The uri must not be null!")
     }
 
-    override val rootLayoutRes: Int
-        get() = R.layout.fragment_kelin_photo_selector_play_video
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        player?.release()
-        player = SimpleExoPlayer.Builder(requireContext()).build().apply {
-            addAnalyticsListener(EventLogger(null))
-            addListener(playerEventListener)
-            playWhenReady = true
-            prepare(ProgressiveMediaSource.Factory {
-                DefaultDataSourceFactory(context, "exoplayer-codelab").createDataSource()
-            }.createMediaSource(uri))
-        }
-        return super.onCreateView(inflater, container, savedInstanceState)
+    override fun generateViewBinding(inflater: LayoutInflater, container: ViewGroup?, attachToParent: Boolean): FragmentKelinPhotoSelectorPlayVideoBinding {
+        return  FragmentKelinPhotoSelectorPlayVideoBinding.inflate(inflater, container, attachToParent)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        view.pvKelinPhotoSelectorVideoPlayer.also { pv ->
-            pv.setControlDispatcher(object : DefaultControlDispatcher(){
-                override fun dispatchSetPlayWhenReady(player: Player, playWhenReady: Boolean): Boolean {
-                    manualPause = !playWhenReady //记录用户是否手动暂停了。
-                    return super.dispatchSetPlayWhenReady(player, playWhenReady)
+        exoPlayer.apply {
+            addAnalyticsListener(EventLogger())
+            addListener(playerEventListener)
+            playWhenReady = true
+            setMediaSource(
+                ProgressiveMediaSource.Factory{
+                    DefaultDataSource(view.context, "exoplayer-codelab", false)
+                }.createMediaSource(MediaItem.fromUri(uri))
+            )
+            prepare()
+        }
+        vb.pvKelinPhotoSelectorVideoPlayer.run {
+            player = exoPlayer
+            try {
+                val controller = javaClass.getDeclaredField("controller").let {
+                    it.isAccessible = true
+                    it.get(this)
                 }
-            })
-            pv.player = player
+                controller.javaClass.getDeclaredField("playPauseButton").let {
+                    it.isAccessible = true
+                    it.get(controller)as View
+                }.setOnClickListener {
+                    controller.javaClass.getDeclaredMethod("dispatchPlayPause", Player::class.java).also { method ->
+                        val state = exoPlayer.playbackState
+                        val wantPlay = state == Player.STATE_IDLE || state == Player.STATE_ENDED || !exoPlayer.playWhenReady
+                        manualPause = !(wantPlay)
+                        method.isAccessible = true
+                        method.invoke(controller, exoPlayer)
+                        Log.d("VideoPlayer", "${wantPlay}|${state == Player.STATE_IDLE || state == Player.STATE_ENDED || !exoPlayer.playWhenReady}|${exoPlayer.isPlaying}")
+                    }
+                }
+            } catch (_: Exception) { }
         }
     }
 
     override fun onResume() {
         super.onResume()
+        Log.d("VideoPlayer", "onResume：${manualPause}")
         if (!manualPause) {
-            player?.playWhenReady = true
+            exoPlayer.playWhenReady = true
+            vb.pvKelinPhotoSelectorVideoPlayer.hideController()
         }
     }
 
     override fun onPause() {
         super.onPause()
-        player?.playWhenReady = false
+        exoPlayer.playWhenReady = false
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        player?.apply {
+        exoPlayer.apply {
             removeListener(playerEventListener)
             release()
         }
     }
 
-    private inner class PlayerEventListener : Player.EventListener{
-        override fun onPlayerError(error: ExoPlaybackException) {
+    private inner class PlayerEventListener : Player.Listener{
+        override fun onPlayerError(error: PlaybackException) {
             Toast.makeText(applicationContext, "播放失败", Toast.LENGTH_SHORT).show()
         }
     }

@@ -18,11 +18,11 @@ import com.bumptech.glide.request.RequestOptions
 import com.bumptech.glide.request.target.Target
 import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.R
+import com.kelin.photoselector.databinding.FragmentKelinPhotoSelectorPhotoPreviewBinding
+import com.kelin.photoselector.databinding.ViewKelinPhotoSelectorPhotoViewBinding
 import com.kelin.photoselector.model.Photo
 import com.kelin.photoselector.model.Picture
 import com.kelin.photoselector.utils.statusBarOffsetPx
-import kotlinx.android.synthetic.main.fragment_kelin_photo_selector_photo_preview.*
-import kotlinx.android.synthetic.main.view_kelin_photo_selector_photo_view.view.*
 
 /**
  * **描述:** 图片和视频预览页面。
@@ -33,7 +33,7 @@ import kotlinx.android.synthetic.main.view_kelin_photo_selector_photo_view.view.
  *
  * **版本:** v 1.0.0
  */
-internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
+internal class PhotoPreviewFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelectorPhotoPreviewBinding>() {
 
     companion object {
         private const val KEY_PHOTO_URLS_DATA = "key_kelin_photo_selector_photo_urls_data"
@@ -51,9 +51,6 @@ internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
         }
     }
 
-    override val rootLayoutRes: Int
-        get() = R.layout.fragment_kelin_photo_selector_photo_preview
-
 
     @Suppress("unchecked_cast")
     private val photos by lazy {
@@ -69,46 +66,52 @@ internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
      */
     private val pageAdapter by lazy { PhotoViewPageAdapter(photos) }
 
+    override fun generateViewBinding(inflater: LayoutInflater, container: ViewGroup?, attachToParent: Boolean): FragmentKelinPhotoSelectorPhotoPreviewBinding {
+        return FragmentKelinPhotoSelectorPhotoPreviewBinding.inflate(inflater, container, attachToParent)
+    }
+
     @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        //获取初始化索引，默认为第一个。
-        val p = requireArguments().getInt(KEY_SELECTED_POSITION, 0)
-        tvKelinPhotoSelectorIndicator.apply {
-            if (photos.size > 1) {
-                (layoutParams as ViewGroup.MarginLayoutParams).also { lp ->
-                    lp.topMargin = context.statusBarOffsetPx
+        withViewBinding {
+            //获取初始化索引，默认为第一个。
+            val p = requireArguments().getInt(KEY_SELECTED_POSITION, 0)
+            tvKelinPhotoSelectorIndicator.apply {
+                if (photos.size > 1) {
+                    (layoutParams as ViewGroup.MarginLayoutParams).also { lp ->
+                        lp.topMargin = context.statusBarOffsetPx
+                    }
+                    //设置图片预览指示器
+                    text = "${p + 1}/${photos.size}"
+                } else {
+                    visibility = View.GONE
                 }
-                //设置图片预览指示器
-                text = "${p + 1}/${photos.size}"
-            } else {
-                visibility = View.GONE
             }
-        }
-        //初始化ViewPager以及所有子View。
-        vpKelinPhotoSelectorPager.run {
-            offscreenPageLimit = 3  //设置预加载3页，即左边、当前、右边，这样在滑动时更加流畅，基本看不到loading。
-            //为ViewPager设置页面切换监听
-            registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-                override fun onPageSelected(position: Int) {
-                    //当选中页面变更后更新指示器。
-                    tvKelinPhotoSelectorIndicator.text = "${position + 1}/${pageAdapter.itemCount}"
-                }
-            })
-            adapter = pageAdapter
-            setCurrentItem(p, false)
+            //初始化ViewPager以及所有子View。
+            vpKelinPhotoSelectorPager.run {
+                offscreenPageLimit = 3  //设置预加载3页，即左边、当前、右边，这样在滑动时更加流畅，基本看不到loading。
+                //为ViewPager设置页面切换监听
+                registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+                    override fun onPageSelected(position: Int) {
+                        //当选中页面变更后更新指示器。
+                        tvKelinPhotoSelectorIndicator.text = "${position + 1}/${pageAdapter.itemCount}"
+                    }
+                })
+                adapter = pageAdapter
+                setCurrentItem(p, false)
+            }
         }
     }
 
     private inner class PhotoViewPageAdapter(private val photos: List<Photo>) : RecyclerView.Adapter<PhotoViewHolder>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): PhotoViewHolder {
-            return PhotoViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.view_kelin_photo_selector_photo_view, parent, false))
+            return PhotoViewHolder(ViewKelinPhotoSelectorPhotoViewBinding.inflate(LayoutInflater.from(parent.context), parent, false))
         }
 
         override fun onBindViewHolder(holder: PhotoViewHolder, position: Int) {
-            holder.itemView.also { iv ->
+            holder.vb.also { vb ->
                 val photo = photos[position]
-                Glide.with(iv.context)
+                Glide.with(vb.root.context)
                     .load(photo.uri)
                     .apply(RequestOptions.centerInsideTransform().error(R.drawable.kelin_photo_selector_img_load_error))
                     .addListener(object : RequestListener<Drawable> {
@@ -117,7 +120,7 @@ internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
                         }
 
                         override fun onResourceReady(resource: Drawable?, model: Any?, target: Target<Drawable>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
-                            iv.ivKelinPhotoSelectorPlayVideo.visibility = if (photo.isVideo) {
+                            vb.ivKelinPhotoSelectorPlayVideo.visibility = if (photo.isVideo) {
                                 View.VISIBLE
                             } else {
                                 View.GONE
@@ -125,7 +128,7 @@ internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
                             return false
                         }
                     })
-                    .into(iv.ptKelinPhotoSelectorPhotoTargetView.target)
+                    .into(vb.ptKelinPhotoSelectorPhotoTargetView.target)
             }
         }
 
@@ -134,11 +137,11 @@ internal class PhotoPreviewFragment : BasePhotoSelectorFragment() {
         }
     }
 
-    private inner class PhotoViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    private inner class PhotoViewHolder(val vb: ViewKelinPhotoSelectorPhotoViewBinding) : RecyclerView.ViewHolder(vb.root) {
         init {
-            itemView.ptKelinPhotoSelectorPhotoTargetView.setOnClickListener { finish() }
+            vb.ptKelinPhotoSelectorPhotoTargetView.setOnClickListener { finish() }
             //设置播放视频控件点击之后调用系统的播放视频功能播放视频。
-            itemView.ivKelinPhotoSelectorPlayVideo.setOnClickListener {
+            vb.ivKelinPhotoSelectorPlayVideo.setOnClickListener {
                 PhotoSelector.playVideo(requireActivity(), photos[layoutPosition])
             }
         }

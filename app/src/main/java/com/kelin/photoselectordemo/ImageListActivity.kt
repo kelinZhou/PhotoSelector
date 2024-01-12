@@ -14,8 +14,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.bumptech.glide.request.RequestOptions
 import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.model.PhotoImpl
-import kotlinx.android.synthetic.main.activity_image_list.*
-import kotlinx.android.synthetic.main.holder_image.view.*
+import com.kelin.photoselectordemo.databinding.HolderImageBinding
 
 /**
  * **描述:** 图片列表页面。
@@ -45,11 +44,11 @@ class ImageListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_image_list)
-        rvImageList.run {
+        findViewById<RecyclerView>(R.id.rvImageList).run {
             layoutManager = LinearLayoutManager(this@ImageListActivity)
             adapter = object : RecyclerView.Adapter<ImageHolder>() {
                 override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageHolder {
-                    return ImageHolder(LayoutInflater.from(parent.context).inflate(R.layout.holder_image, parent, false))
+                    return ImageHolder(HolderImageBinding.inflate(LayoutInflater.from(parent.context), parent, false))
                 }
 
                 override fun getItemCount(): Int {
@@ -57,14 +56,14 @@ class ImageListActivity : AppCompatActivity() {
                 }
 
                 override fun onBindViewHolder(holder: ImageHolder, position: Int) {
-                    holder.itemView.also { iv ->
+                    holder.vb.also { vb ->
                         val photo = photos[position]
                         Glide.with(this@ImageListActivity)
                             .load(photo.uri)
                             .transition(DrawableTransitionOptions.withCrossFade())
                             .apply(RequestOptions.centerCropTransform())
-                            .into(iv.ivPhoto)
-                        iv.ivPlayVideo.visibility = if (photo.isVideo) {
+                            .into(vb.ivPhoto)
+                        vb.ivPlayVideo.visibility = if (photo.isVideo) {
                             View.VISIBLE
                         } else {
                             View.GONE
@@ -75,12 +74,12 @@ class ImageListActivity : AppCompatActivity() {
         }
     }
 
-    private inner class ImageHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    private inner class ImageHolder(val vb: HolderImageBinding) : RecyclerView.ViewHolder(vb.root) {
         init {
-            itemView.setOnClickListener {
+            vb.root.setOnClickListener {
                 PhotoSelector.openPicturePreviewPage(this@ImageListActivity, photos, layoutPosition)
             }
-            itemView.ivPlayVideo.setOnClickListener {
+            vb.ivPlayVideo.setOnClickListener {
                 PhotoSelector.playVideo(this@ImageListActivity, photos[layoutPosition])
             }
         }

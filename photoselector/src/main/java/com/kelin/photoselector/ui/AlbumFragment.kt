@@ -17,12 +17,15 @@ import androidx.loader.app.LoaderManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.viewbinding.ViewBinding
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.kelin.okpermission.OkActivityResult
 import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.R
 import com.kelin.photoselector.cache.DistinctManager
+import com.kelin.photoselector.databinding.FragmentKelinPhotoSelectorAlbumBinding
+import com.kelin.photoselector.databinding.HolderKelinPhotoSelectorPictureBinding
 import com.kelin.photoselector.loader.AlbumPictureLoadCallback
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.model.Album
@@ -33,8 +36,6 @@ import com.kelin.photoselector.utils.compressAndRotateByDegree
 import com.kelin.photoselector.utils.statusBarOffsetPx
 import com.kelin.photoselector.widget.AlbumsDialog
 import com.kelin.photoselector.widget.ProgressDialog
-import kotlinx.android.synthetic.main.fragment_kelin_photo_selector_album.*
-import kotlinx.android.synthetic.main.holder_kelin_photo_selector_picture.view.*
 import java.io.File
 import java.io.Serializable
 import java.text.SimpleDateFormat
@@ -50,7 +51,7 @@ import kotlin.collections.ArrayList
  *
  * **版本:** v 1.0.0
  */
-internal class AlbumFragment : BasePhotoSelectorFragment() {
+internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelectorAlbumBinding>() {
 
     companion object {
         private const val KEY_KELIN_PHOTO_SELECTOR_ALBUM_TYPE = "key_kelin_photo_selector_album_type"
@@ -85,9 +86,6 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         get() = if (PhotoSelector.isAlbumTakePictureEnable) 1 else 0
 
     private val dataFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.CHINA) }
-
-    override val rootLayoutRes: Int
-        get() = R.layout.fragment_kelin_photo_selector_album
 
     private val handler by lazy { Handler(Looper.getMainLooper()) }
 
@@ -144,70 +142,76 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
 
     private var albums = emptyList<Album>()
 
+    override fun generateViewBinding(inflater: LayoutInflater, container: ViewGroup?, attachToParent: Boolean): FragmentKelinPhotoSelectorAlbumBinding {
+        return FragmentKelinPhotoSelectorAlbumBinding.inflate(inflater, container, attachToParent)
+    }
+
     @SuppressLint("SetTextI18n")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        rlKelinPhotoSelectorToolbar.setPadding(0, context.statusBarOffsetPx, 0, 0)
+        withViewBinding {
+            rlKelinPhotoSelectorToolbar.setPadding(0, context.statusBarOffsetPx, 0, 0)
 
-        tvKelinPhotoSelectorPageTitle.text = "${getString(R.string.kelin_photo_selector_select)}$message"
-        updateSelectedCount(0)
+            tvKelinPhotoSelectorPageTitle.text = "${getString(R.string.kelin_photo_selector_select)}$message"
+            updateSelectedCount(0)
 
-        rvKelinPhotoSelectorPhotoListView.run {
-            layoutManager = listLayoutManager
-            adapter = listAdapter
-            itemAnimator = DefaultItemAnimator().apply {
-                addDuration = 0
-                changeDuration = 200
-                removeDuration = 0
-                moveDuration = 0
-            }
-            addOnScrollListener(object : RecyclerView.OnScrollListener() {
-                override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
-                    if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
-                        tvKelinPhotoSelectorModifiedDate.visibility = View.VISIBLE
-                    } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                        tvKelinPhotoSelectorModifiedDate.visibility = View.GONE
-                    }
+            rvKelinPhotoSelectorPhotoListView.run {
+                layoutManager = listLayoutManager
+                adapter = listAdapter
+                itemAnimator = DefaultItemAnimator().apply {
+                    addDuration = 0
+                    changeDuration = 200
+                    removeDuration = 0
+                    moveDuration = 0
                 }
-
-                override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-                    tvKelinPhotoSelectorModifiedDate.text = if (listAdapter.itemCount - albumOffset > 0) {
-                        listLayoutManager.findFirstVisibleItemPosition().let {
-                            listAdapter.getItem(it + albumOffset).modifyDate
+                addOnScrollListener(object : RecyclerView.OnScrollListener() {
+                    override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
+                        if (newState == RecyclerView.SCROLL_STATE_DRAGGING) {
+                            tvKelinPhotoSelectorModifiedDate.visibility = View.VISIBLE
+                        } else if (newState == RecyclerView.SCROLL_STATE_IDLE) {
+                            tvKelinPhotoSelectorModifiedDate.visibility = View.GONE
                         }
-                    } else {
-                        ""
                     }
+
+                    override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                        tvKelinPhotoSelectorModifiedDate.text = if (listAdapter.itemCount - albumOffset > 0) {
+                            listLayoutManager.findFirstVisibleItemPosition().let {
+                                listAdapter.getItem(it + albumOffset).modifyDate
+                            }
+                        } else {
+                            ""
+                        }
+                    }
+                })
+            }
+            LoaderManager.getInstance(this@AlbumFragment).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext, requireArguments().getFloat(KEY_KELIN_PHOTO_SELECTOR_MAX_SIZE, 0F), requireArguments().getLong(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, 0)) {
+                albums = it
+                val defAlbum = it.find { a -> a.name == sp.getString("kelin_photo_selector_selected_album_name", "") } ?: it.firstOrNull()
+                if (defAlbum == null) {
+                    Toast.makeText(applicationContext, "您的设备中没有任何${message}", Toast.LENGTH_SHORT).show()
+                } else {
+                    onAlbumSelected(defAlbum)
                 }
             })
-        }
-        LoaderManager.getInstance(this).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext, requireArguments().getFloat(KEY_KELIN_PHOTO_SELECTOR_MAX_SIZE, 0F), requireArguments().getLong(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, 0)) {
-            albums = it
-            val defAlbum = it.find { a -> a.name == sp.getString("kelin_photo_selector_selected_album_name", "") } ?: it.firstOrNull()
-            if (defAlbum == null) {
-                Toast.makeText(applicationContext, "您的设备中没有任何${message}", Toast.LENGTH_SHORT).show()
-            } else {
-                onAlbumSelected(defAlbum)
+            //关闭当前页面
+            ivKelinPhotoSelectorFinish.setOnClickListener { finish() }
+            //变更相册
+            rlKelinPhotoSelectorAlbumName.setOnClickListener { onSelectAlbums() }
+            //重新选择
+            tvKelinPhotoSelectorReselect.setOnClickListener {
+                listAdapter.clearSelected()
+                updateSelectedCount(listAdapter.selectedPictures.size)
             }
-        })
-        //关闭当前页面
-        ivKelinPhotoSelectorFinish.setOnClickListener { finish() }
-        //变更相册
-        rlKelinPhotoSelectorAlbumName.setOnClickListener { onSelectAlbums() }
-        //重新选择
-        tvKelinPhotoSelectorReselect.setOnClickListener {
-            listAdapter.clearSelected()
-            updateSelectedCount(listAdapter.selectedPictures.size)
-        }
-        //预览选中图片
-        tvKelinPhotoSelectorPreview.setOnClickListener {
-            PhotoSelector.openPicturePreviewPage(requireActivity(), listAdapter.selectedPictures)
-        }
-        if (justSelectOne) {
-            btnKelinPhotoSelectorDone.setBackgroundColor(Color.TRANSPARENT)
-        } else {
-            //用户点击完成按钮。
-            btnKelinPhotoSelectorDone.setOnClickListener {
-                onSelectDone()
+            //预览选中图片
+            tvKelinPhotoSelectorPreview.setOnClickListener {
+                PhotoSelector.openPicturePreviewPage(requireActivity(), listAdapter.selectedPictures)
+            }
+            if (justSelectOne) {
+                btnKelinPhotoSelectorDone.setBackgroundColor(Color.TRANSPARENT)
+            } else {
+                //用户点击完成按钮。
+                btnKelinPhotoSelectorDone.setOnClickListener {
+                    onSelectDone()
+                }
             }
         }
     }
@@ -250,7 +254,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
             currentAlbumName = album.name
             sp.edit().putString("kelin_photo_selector_selected_album_name", album.name).apply()
             listAdapter.setPhotos(album.pictures)
-            tvKelinPhotoSelectorAlbumName.text = album.name
+            vb.tvKelinPhotoSelectorAlbumName.text = album.name
         }
     }
 
@@ -265,14 +269,14 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         } else {
             View.INVISIBLE
         }
-        tvKelinPhotoSelectorPreview.apply {
+        vb.tvKelinPhotoSelectorPreview.apply {
             visibility = visible
             if (selectedCount > 0) {
                 text = "${getString(R.string.kelin_photo_selector_preview)}(${selectedCount})"
             }
         }
-        tvKelinPhotoSelectorReselect.visibility = visible
-        btnKelinPhotoSelectorDone.apply {
+        vb.tvKelinPhotoSelectorReselect.visibility = visible
+        vb.btnKelinPhotoSelectorDone.apply {
             text = "${getString(if (justSelectOne) R.string.kelin_photo_selector_selected else R.string.kelin_photo_selector_done)}($selectedCount/$maxLength)"
             isEnabled = !justSelectOne && selectedCount > 0
         }
@@ -370,13 +374,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
                     )
                 )
             } else {
-                PhotoHolder(
-                    LayoutInflater.from(parent.context).inflate(
-                        R.layout.holder_kelin_photo_selector_picture,
-                        parent,
-                        false
-                    )
-                )
+                PhotoHolder(HolderKelinPhotoSelectorPictureBinding.inflate(LayoutInflater.from(parent.context), parent, false))
             }
         }
 
@@ -418,9 +416,9 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         }
     }
 
-    private inner class PhotoHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    private inner class PhotoHolder(private val vb: HolderKelinPhotoSelectorPictureBinding) : RecyclerView.ViewHolder(vb.root) {
         init {
-            itemView.rlKelinPhotoSelectorChecker.setOnClickListener {
+            vb.rlKelinPhotoSelectorChecker.setOnClickListener {
                 listAdapter.getItem(layoutPosition).apply {
                     //如果被选中了的资源中没有当前的资源，那么就认为当前用户的目的是选中，否则就是取消选中。
                     val isSelected = !listAdapter.selectedPictures.contains(this)
@@ -441,31 +439,29 @@ internal class AlbumFragment : BasePhotoSelectorFragment() {
         }
 
         fun bindData(data: Picture) {
-            itemView.also { iv ->
-                Glide.with(iv.context)
-                    .load(data.uri)
-                    .apply(RequestOptions.centerCropTransform().placeholder(R.drawable.image_placeholder))
-                    .into(iv.ivKelinPhotoSelectorPhotoView)
-                val no = listAdapter.selectedPictures.indexOf(data)
-                iv.pmKelinPhotoSelectorPhotoViewMask.isSelected = no >= 0
-                val canOperation = !listAdapter.isInitSelected(data)
-                iv.tvKelinPhotoSelectorChecker.run {
-                    isSelected = no >= 0
-                    text = if (no >= 0) {
-                        (no + 1).toString()
-                    } else {
-                        null
-                    }
-                    isEnabled = canOperation
+            Glide.with(vb.root.context)
+                .load(data.uri)
+                .apply(RequestOptions.centerCropTransform().placeholder(R.drawable.image_placeholder))
+                .into(vb.ivKelinPhotoSelectorPhotoView)
+            val no = listAdapter.selectedPictures.indexOf(data)
+            vb.pmKelinPhotoSelectorPhotoViewMask.isSelected = no >= 0
+            val canOperation = !listAdapter.isInitSelected(data)
+            vb.tvKelinPhotoSelectorChecker.run {
+                isSelected = no >= 0
+                text = if (no >= 0) {
+                    (no + 1).toString()
+                } else {
+                    null
                 }
-                iv.rlKelinPhotoSelectorChecker.isEnabled = canOperation
-                iv.tvKelinPhotoSelectorVideoDuration.apply {
-                    visibility = if (data.type == PictureType.VIDEO) {
-                        text = data.duration
-                        View.VISIBLE
-                    } else {
-                        View.GONE
-                    }
+                isEnabled = canOperation
+            }
+            vb.rlKelinPhotoSelectorChecker.isEnabled = canOperation
+            vb.tvKelinPhotoSelectorVideoDuration.apply {
+                visibility = if (data.type == PictureType.VIDEO) {
+                    text = data.duration
+                    View.VISIBLE
+                } else {
+                    View.GONE
                 }
             }
         }

@@ -16,8 +16,7 @@ import com.bumptech.glide.request.target.CustomViewTarget
 import com.bumptech.glide.request.transition.Transition
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
-import com.kelin.photoselector.R
-import kotlinx.android.synthetic.main.view_kelin_photo_selector_photo_target_view.view.*
+import com.kelin.photoselector.databinding.ViewKelinPhotoSelectorPhotoTargetViewBinding
 
 /**
  * **描述:** 用来显示图片的空间。
@@ -30,15 +29,17 @@ import kotlinx.android.synthetic.main.view_kelin_photo_selector_photo_target_vie
  */
 class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: AttributeSet, defStylesAttr: Int = 0) : RelativeLayout(context, attrs, defStylesAttr) {
 
+    private val vb by lazy { ViewKelinPhotoSelectorPhotoTargetViewBinding.inflate(LayoutInflater.from(context), this, false) }
+
     init {
-        LayoutInflater.from(context).inflate(R.layout.view_kelin_photo_selector_photo_target_view, this)
+        addView(vb.root)
     }
 
-    internal val imageView: SubsamplingScaleImageView by lazy { ivKelinPhotoSelectorPhotoView }
+    internal val imageView: SubsamplingScaleImageView by lazy { vb.ivKelinPhotoSelectorPhotoView }
 
-    internal val defImageView: AppCompatImageView by lazy { ivKelinPhotoSelectorGifView }
+    internal val defImageView: AppCompatImageView by lazy { vb.ivKelinPhotoSelectorGifView }
 
-    internal val progressBar: ProgressBar by lazy { pbKelinPhotoSelectorProgress }
+    internal val progressBar: ProgressBar by lazy { vb.pbKelinPhotoSelectorProgress }
 
     val target by lazy { PhotoTarget(this) }
 
@@ -61,8 +62,8 @@ class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: Attribu
     }
 
     override fun setOnClickListener(l: OnClickListener?) {
-        ivKelinPhotoSelectorPhotoView.setOnClickListener(l)
-        ivKelinPhotoSelectorGifView.setOnClickListener(l)
+        vb.ivKelinPhotoSelectorPhotoView.setOnClickListener(l)
+        vb.ivKelinPhotoSelectorGifView.setOnClickListener(l)
     }
 
     inner class PhotoTarget(private val target: PhotoTargetView) : CustomViewTarget<PhotoTargetView, Drawable>(target) {

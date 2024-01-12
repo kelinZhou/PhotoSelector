@@ -6,7 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
+import androidx.viewbinding.ViewBinding
 
 /**
  * **描述:** Fragment的基类。
@@ -17,18 +17,35 @@ import androidx.fragment.app.FragmentManager
  *
  * **版本:** v 1.0.0
  */
-internal abstract class BasePhotoSelectorFragment : Fragment() {
+internal abstract class BasePhotoSelectorFragment<VB : ViewBinding> : Fragment() {
 
-    val applicationContext: Context
+    protected val applicationContext: Context
         get() = requireContext().applicationContext
 
-    protected abstract val rootLayoutRes: Int
+    private var mVB: VB? = null
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        return inflater.inflate(rootLayoutRes, container, false)
+    internal val vb: VB
+        get() = mVB!!
+
+    final override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+        return generateViewBinding(inflater, container).let {
+            mVB = it
+            it.root
+        }
+    }
+
+    abstract fun generateViewBinding(inflater: LayoutInflater, container: ViewGroup?, attachToParent: Boolean = false): VB
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mVB = null
     }
 
     fun finish() {
         activity?.finish()
     }
+}
+
+internal inline fun <VB : ViewBinding> BasePhotoSelectorFragment<VB>.withViewBinding(block: VB.() -> Unit) {
+    block(vb)
 }

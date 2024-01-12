@@ -10,14 +10,13 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.bumptech.glide.request.RequestOptions
 import com.kelin.photoselector.R
+import com.kelin.photoselector.databinding.HolderKelinPhotoSelectorAlbumBinding
 import com.kelin.photoselector.model.Album
-import kotlinx.android.synthetic.main.dialog_kelin_photo_selector_albums.*
-import kotlinx.android.synthetic.main.holder_kelin_photo_selector_album.view.*
 
 /**
  * **描述:** 相册弹窗。
  *
- * **创建人:** kelin
+ * **创建人:** stephen
  *
  * **创建时间:** 2020/7/13 2:52 PM
  *
@@ -30,7 +29,7 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
     private val listAdapter by lazy {
         object : RecyclerView.Adapter<AlbumHolder>() {
             override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): AlbumHolder {
-                return AlbumHolder(LayoutInflater.from(context).inflate(R.layout.holder_kelin_photo_selector_album, parent, false))
+                return AlbumHolder(HolderKelinPhotoSelectorAlbumBinding.inflate(LayoutInflater.from(context), parent, false))
             }
 
             override fun getItemCount(): Int {
@@ -39,16 +38,16 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
 
             @SuppressLint("SetTextI18n")
             override fun onBindViewHolder(holder: AlbumHolder, position: Int) {
-                holder.itemView.also { iv ->
+                holder.vb.also { vb ->
                     val album = albums[position]
-                    Glide.with(iv.context)
+                    Glide.with(vb.root.context)
                         .load(album.cover.path)
                         .apply(RequestOptions().centerCrop().placeholder(R.drawable.image_placeholder))
-                        .into(iv.ivKelinPhotoSelectorPhotoView)
-                    iv.tvKelinPhotoSelectorAlbumName.text = album.name
-                    iv.tvKelinPhotoSelectorAlbumPath.text = album.path
-                    iv.tvKelinPhotoSelectorCount.text = "共${album.pictures.size}个资源"
-                    iv.ivKelinPhotoSelectorAlbumChecker.visibility = if (position == selectedPosition) {
+                        .into(vb.ivKelinPhotoSelectorPhotoView)
+                    vb.tvKelinPhotoSelectorAlbumName.text = album.name
+                    vb.tvKelinPhotoSelectorAlbumPath.text = album.path
+                    vb.tvKelinPhotoSelectorCount.text = "共${album.pictures.size}个资源"
+                    vb.ivKelinPhotoSelectorAlbumChecker.visibility = if (position == selectedPosition) {
                         View.VISIBLE
                     } else {
                         View.INVISIBLE
@@ -70,7 +69,7 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
             }
         }
         setCancelable(true)
-        rlKelinPhotoSelectorAlbums.apply {
+        findViewById<RecyclerView>(R.id.rlKelinPhotoSelectorAlbums).apply {
             layoutManager = LinearLayoutManager(context)
             adapter = listAdapter
             itemAnimator = null
@@ -78,7 +77,7 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
     }
 
 
-    private inner class AlbumHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+    private inner class AlbumHolder(val vb: HolderKelinPhotoSelectorAlbumBinding) : RecyclerView.ViewHolder(vb.root) {
         init {
             itemView.setOnClickListener {
                 val layoutPosition = layoutPosition

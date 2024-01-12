@@ -215,7 +215,7 @@ object PhotoSelector {
     @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(fragment, AlbumType.PHOTO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
     fun openPhotoSelectorSingle(fragment: Fragment, result: SinglePhotoCallback) {
         fragment.activity?.also { activity ->
-            realOpenSelector<Photo>(activity, false, AlbumType.PHOTO, 1, ID_SINGLE, 0F, 0, result)
+            realOpenSelector<Photo>(activity, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.PHOTO, 1, ID_SINGLE, 0F, 0, result)
         }
     }
 
@@ -234,7 +234,7 @@ object PhotoSelector {
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            realOpenSelector<List<Photo>>(activity, false, AlbumType.PHOTO, maxLength, id, 0F, 0, result)
+            realOpenSelector<List<Photo>>(activity, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.PHOTO, maxLength, id, 0F, 0, result)
         }
     }
 
@@ -245,7 +245,7 @@ object PhotoSelector {
      */
     @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(context, AlbumType.PHOTO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
     fun openPhotoSelectorSingle(context: Context, result: SinglePhotoCallback) {
-        realOpenSelector<Photo>(context, false, AlbumType.PHOTO, 1, ID_SINGLE, 0F, 0, result)
+        realOpenSelector<Photo>(context, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.PHOTO, 1, ID_SINGLE, 0F, 0, result)
     }
 
     /**
@@ -262,7 +262,7 @@ object PhotoSelector {
         if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        realOpenSelector<List<Photo>>(context, false, AlbumType.PHOTO, maxLength, id, 0F, 0, result)
+        realOpenSelector<List<Photo>>(context, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.PHOTO, maxLength, id, 0F, 0, result)
     }
 
     /**
@@ -274,7 +274,7 @@ object PhotoSelector {
     @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(fragment, AlbumType.VIDEO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
     fun openVideoSelectorSingle(fragment: Fragment, maxDuration: Int = 0, result: SinglePhotoCallback) {
         fragment.activity?.also { activity ->
-            realOpenSelector<Photo>(activity, false, AlbumType.VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
+            realOpenSelector<Photo>(activity, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
         }
     }
 
@@ -294,7 +294,7 @@ object PhotoSelector {
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            realOpenSelector<List<Photo>>(activity, false, AlbumType.VIDEO, maxLength, id, 0F, maxDuration, result)
+            realOpenSelector<List<Photo>>(activity, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.VIDEO, maxLength, id, 0F, maxDuration, result)
         }
     }
 
@@ -306,7 +306,7 @@ object PhotoSelector {
      */
     @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(context, AlbumType.VIDEO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
     fun openVideoSelectorSingle(context: Context, maxDuration: Int = 0, result: SinglePhotoCallback) {
-        realOpenSelector<Photo>(context, false, AlbumType.VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
+        realOpenSelector<Photo>(context, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
     }
 
     /**
@@ -324,7 +324,7 @@ object PhotoSelector {
         if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        realOpenSelector<List<Photo>>(context, false, AlbumType.VIDEO, maxLength, id, 0F, maxDuration, result)
+        realOpenSelector<List<Photo>>(context, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.VIDEO, maxLength, id, 0F, maxDuration, result)
     }
 
     /**
@@ -336,7 +336,7 @@ object PhotoSelector {
     @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(fragment, AlbumType.PHOTO_VIDEO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
     fun openPictureSelectorSingle(fragment: Fragment, maxDuration: Int = 0, result: SinglePhotoCallback) {
         fragment.activity?.also { activity ->
-            realOpenSelector<Photo>(activity, false, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
+            realOpenSelector<Photo>(activity, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
         }
     }
 
@@ -356,7 +356,7 @@ object PhotoSelector {
             if (id != ID_REPEATABLE && id != ID_SINGLE) {
                 fragment.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
             }
-            realOpenSelector<List<Photo>>(activity, false, AlbumType.PHOTO_VIDEO, maxLength, id, 0F, maxDuration, result)
+            realOpenSelector<List<Photo>>(activity, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.PHOTO_VIDEO, maxLength, id, 0F, maxDuration, result)
         }
     }
 
@@ -368,7 +368,7 @@ object PhotoSelector {
      */
     @Deprecated("Please use withSysAlbum or withSelectorAlbum method.", replaceWith = ReplaceWith("PhotoSelector.withSelectorAlbum(context, AlbumType.PHOTO_VIDEO){\nselect { photo ->\n\n}\n}", "com.kelin.photoselector.model.AlbumType"))
     fun openPictureSelectorSingle(context: Context, maxDuration: Int = 0, result: SinglePhotoCallback) {
-        realOpenSelector<Photo>(context, false, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
+        realOpenSelector<Photo>(context, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.PHOTO_VIDEO, 1, ID_SINGLE, 0F, maxDuration, result)
     }
 
     /**
@@ -386,7 +386,7 @@ object PhotoSelector {
         if (id != ID_REPEATABLE && id != ID_SINGLE && context is LifecycleOwner) {
             context.lifecycle.addObserver(DistinctManager.instance.tryNewCache(id))
         }
-        realOpenSelector<List<Photo>>(context, false, AlbumType.PHOTO_VIDEO, maxLength, id, 0F, maxDuration, result)
+        realOpenSelector<List<Photo>>(context, OkPermission.permission_group.EXTERNAL_STORAGE, false, AlbumType.PHOTO_VIDEO, maxLength, id, 0F, maxDuration, result)
     }
 
     /**
@@ -449,13 +449,8 @@ object PhotoSelector {
         return fragment.activity?.let { SelectorAlbumOption(it, album) }
     }
 
-    internal fun <R> realOpenSelector(context: Context, useSys: Boolean, albumType: AlbumType, maxLength: Int, id: Int, maxSize: Float, maxDuration: Int, result: (photo: R?) -> Unit) {
-        val permission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            arrayOf(Manifest.permission.READ_MEDIA_IMAGES, Manifest.permission.READ_MEDIA_VIDEO)
-        } else {
-            OkPermission.permission_group.EXTERNAL_STORAGE
-        }
-        attachCallback(context, PermissionCallbackFactory(permission)) { ctx, r ->
+    internal fun <R> realOpenSelector(context: Context, permissions: Array<String>, useSys: Boolean, albumType: AlbumType, maxLength: Int, id: Int, maxSize: Float, maxDuration: Int, result: (photo: R?) -> Unit) {
+        attachCallback(context, PermissionCallbackFactory(permissions)) { ctx, r ->
             if (r) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && useSys) {
                     attachCallback(ctx, Android12SelectPictureCallbackFactory<R>(albumType, maxLength)) { _, photos ->

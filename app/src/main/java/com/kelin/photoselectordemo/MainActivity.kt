@@ -10,15 +10,21 @@ import com.kelin.photoselector.model.AlbumType
 import com.kelin.photoselector.model.PhotoImpl
 import com.kelin.photoselector.option.select
 import com.kelin.photoselector.option.selectAll
-import kotlinx.android.synthetic.main.activity_main.*
+import com.kelin.photoselectordemo.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
+
+    private var mVB: ActivityMainBinding? = null
+
+    private val vb: ActivityMainBinding
+        get() = mVB!!
 
     @SuppressLint("MissingPermission")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        btnTakePhoto.setOnClickListener {
+        mVB = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(vb.root)
+        vb.btnTakePhoto.setOnClickListener {
             PhotoSelector.takePhoto(this) {
                 if (it != null) {
                     PhotoSelector.openPicturePreviewPage(this, listOf(PhotoImpl(it.absolutePath)))
@@ -28,7 +34,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnTakeVideo.setOnClickListener {
+        vb.btnTakeVideo.setOnClickListener {
             PhotoSelector.takeVideo(this) {
                 if (it != null) {
                     PhotoSelector.openPicturePreviewPage(this, listOf(PhotoImpl(it.absolutePath)))
@@ -38,7 +44,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnPhotoSelectSingle.setOnClickListener {
+        vb.btnPhotoSelectSingle.setOnClickListener {
             PhotoSelector.withSelectorAlbum(this, AlbumType.PHOTO).select { photo ->
                 if (photo == null) {
                     Toast.makeText(this@MainActivity, "选择已被取消", Toast.LENGTH_SHORT).show()
@@ -48,7 +54,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnPhotoSelectSingle2.setOnClickListener {
+        vb.btnPhotoSelectSingle2.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 PhotoSelector.withSysAlbum(this, AlbumType.PHOTO) {
                     select { photo ->
@@ -64,7 +70,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnPhotoSelect.setOnClickListener {
+        vb.btnPhotoSelect.setOnClickListener {
             PhotoSelector.withSelectorAlbum(this, AlbumType.PHOTO) {
                 selectAll(6) { photos ->
                     if (photos.isNullOrEmpty()) {
@@ -76,7 +82,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnPhotoSelect2.setOnClickListener {
+        vb.btnPhotoSelect2.setOnClickListener {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 PhotoSelector.withSysAlbum(this, AlbumType.PHOTO) {
                     selectAll(6) { photos ->
@@ -92,7 +98,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnVideoSelectSingle.setOnClickListener {
+        vb.btnVideoSelectSingle.setOnClickListener {
             PhotoSelector.withSelectorAlbum(this, AlbumType.VIDEO) {
                 select { photo ->
                     if (photo == null) {
@@ -104,7 +110,23 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnVideoSelect.setOnClickListener {
+        vb.btnVideoSelectSingle2.setOnClickListener {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                Toast.makeText(applicationContext, "改功能仅Android13支持", Toast.LENGTH_SHORT).show()
+            } else {
+                PhotoSelector.withSysAlbum(this, AlbumType.VIDEO) {
+                    select { photo ->
+                        if (photo == null) {
+                            Toast.makeText(this@MainActivity, "选择已被取消", Toast.LENGTH_SHORT).show()
+                        } else {
+                            PhotoSelector.playVideo(this@MainActivity, photo)
+                        }
+                    }
+                }
+            }
+        }
+
+        vb.btnVideoSelect.setOnClickListener {
             PhotoSelector.withSelectorAlbum(this, AlbumType.VIDEO) {
                 selectAll { photos ->
                     if (photos.isNullOrEmpty()) {
@@ -116,8 +138,26 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnVideoSelectMaxDuration.setOnClickListener {
+        vb.btnVideoSelect2.setOnClickListener {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+                Toast.makeText(applicationContext, "改功能仅Android13支持", Toast.LENGTH_SHORT).show()
+            } else {
+                PhotoSelector.withSysAlbum(this, AlbumType.VIDEO) {
+                    selectAll { photos ->
+                        if (photos.isNullOrEmpty()) {
+                            Toast.makeText(this@MainActivity, "选择已被取消", Toast.LENGTH_SHORT).show()
+                        } else {
+                            ImageListActivity.start(this@MainActivity, *photos.map { it.uri }.toTypedArray())
+                        }
+                    }
+                }
+            }
+        }
+
+        vb.btnVideoSelectMaxDuration.setOnClickListener {
             PhotoSelector.withSelectorAlbum(this, AlbumType.VIDEO) {
+                maxSize = 15F
+                maxDuration = 30
                 selectAll { photos ->
                     if (photos.isNullOrEmpty()) {
                         Toast.makeText(this@MainActivity, "选择已被取消", Toast.LENGTH_SHORT).show()
@@ -128,7 +168,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnPhotoAndVideoSelectSingle.setOnClickListener {
+        vb.btnPhotoAndVideoSelectSingle.setOnClickListener {
             PhotoSelector.withSelectorAlbum(this, AlbumType.PHOTO_VIDEO) {
                 select { photo ->
                     when {
@@ -148,7 +188,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnPhotoAndVideoSelect.setOnClickListener {
+        vb.btnPhotoAndVideoSelect.setOnClickListener {
             PhotoSelector.withSelectorAlbum(this, AlbumType.PHOTO_VIDEO) {
                 selectAll { photos ->
                     if (photos.isNullOrEmpty()) {
@@ -160,7 +200,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        btnPreviewPictures.setOnClickListener {
+        vb.btnPreviewPictures.setOnClickListener {
             PhotoSelector.openPicturePreviewPage(
                 this, listOf(
                     PhotoImpl("https://timgsa.baidu.com/timg?image&quality=80&size=b9999_10000&sec=1594798038139&di=fa8ec9fefaa0a63f691f61b97a7973c5&imgtype=0&src=http%3A%2F%2Fimg0.imgtn.bdimg.com%2Fit%2Fu%3D2811584385%2C4107951140%26fm%3D214%26gp%3D0.jpg"),
@@ -172,5 +212,10 @@ class MainActivity : AppCompatActivity() {
                 )
             )
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mVB = null
     }
 }

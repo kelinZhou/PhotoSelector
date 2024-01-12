@@ -63,11 +63,25 @@
             android:text="选择视频(单选)" />
 
         <Button
+            android:id="@+id/btnVideoSelectSingle2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="选择视频(单选/系统相册)" />
+
+        <Button
             android:id="@+id/btnVideoSelect"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="20dp"
             android:text="选择视频(多选)" />
+
+        <Button
+            android:id="@+id/btnVideoSelect2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="选择视频(多选/系统相册)" />
 
         <Button
             android:id="@+id/btnVideoSelectMaxDuration"
