@@ -63,38 +63,38 @@ tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
 }
 
-// 打包源码
-tasks.register('sourcesJar', Jar) {
-    dependsOn build
-    from android.sourceSets.main.java.srcDirs
-    archiveClassifier.convention('sources')
-    archiveClassifier.set('sources')
-}
-
-tasks.register('javadoc', Javadoc) {
-    dependsOn build
-    failOnError false
-    source = android.sourceSets.main.java.sourceFiles
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-//    classpath += configurations.compile
-}
-
-// 制作文档(Javadoc)
-tasks.register('javadocJar', Jar) {
-    dependsOn javadoc
-    archiveClassifier.convention('sources')
-    archiveClassifier.set('sources')
-    from javadoc.getDestinationDir()
-}
-
-afterEvaluate{
-    artifacts {
-        archives sourcesJar
-        archives javadocJar
-    }
-}
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
-}
+//// 打包源码
+//tasks.register('sourcesJar', Jar) {
+//    dependsOn build
+//    from android.sourceSets.main.java.srcDirs
+//    archiveClassifier.convention('sources')
+//    archiveClassifier.set('sources')
+//}
+//
+//tasks.register('javadoc', Javadoc) {
+//    dependsOn build
+//    failOnError false
+//    source = android.sourceSets.main.java.sourceFiles
+//    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+////    classpath += configurations.compile
+//}
+//
+//// 制作文档(Javadoc)
+//tasks.register('javadocJar', Jar) {
+//    dependsOn javadoc
+//    archiveClassifier.convention('sources')
+//    archiveClassifier.set('sources')
+//    from javadoc.getDestinationDir()
+//}
+//
+//afterEvaluate{
+//    artifacts {
+//        archives sourcesJar
+//        archives javadocJar
+//    }
+//}
+//
+//artifacts {
+//    archives sourcesJar
+//    archives javadocJar
+//}
