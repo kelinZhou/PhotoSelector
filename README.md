@@ -35,7 +35,7 @@
 #### Changed
 - 将Glide图片加载框架替换为Coil。
 - ImageLoader为Coil的核心，用户需要在初始化之前调用代码为Coil设置ImageLoader，例如`Coil.setImageLoader(imageLoader)`或`Coil.setImageLoader(imageLoaderFactory)`
-- 也可以直接让Application实现`ImageLoaderFactory`接口并重写`newImageLoader`方法，例如下面的代码：
+- 也可以直接让Application实现`ImageLoaderFactory`接口并重写`newImageLoader`方法，例如下面的代码： 
 ```kotlin
 class App : Application(), ImageLoaderFactory {
     override fun onCreate() {
