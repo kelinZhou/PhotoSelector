@@ -17,9 +17,7 @@ import androidx.loader.app.LoaderManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import androidx.viewbinding.ViewBinding
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
+import coil.load
 import com.kelin.okpermission.OkActivityResult
 import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.R
@@ -439,10 +437,10 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
         }
 
         fun bindData(data: Picture) {
-            Glide.with(vb.root.context)
-                .load(data.uri)
-                .apply(RequestOptions.centerCropTransform().placeholder(R.drawable.image_placeholder))
-                .into(vb.ivKelinPhotoSelectorPhotoView)
+            vb.ivKelinPhotoSelectorPhotoView.load(data.uri){
+                crossfade(true)
+                placeholder(R.drawable.image_placeholder)
+            }
             val no = listAdapter.selectedPictures.indexOf(data)
             vb.pmKelinPhotoSelectorPhotoViewMask.isSelected = no >= 0
             val canOperation = !listAdapter.isInitSelected(data)

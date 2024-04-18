@@ -8,6 +8,7 @@
 
     <com.kelin.photoselector.widget.PhotoImageView
         android:id="@+id/ivKelinPhotoSelectorPhotoView"
+        android:scaleType="centerCrop"
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 

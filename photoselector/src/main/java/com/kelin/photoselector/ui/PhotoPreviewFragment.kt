@@ -10,12 +10,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.DataSource
-import com.bumptech.glide.load.engine.GlideException
-import com.bumptech.glide.request.RequestListener
-import com.bumptech.glide.request.RequestOptions
-import com.bumptech.glide.request.target.Target
+import coil.imageLoader
+import coil.request.ImageRequest
 import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.R
 import com.kelin.photoselector.databinding.FragmentKelinPhotoSelectorPhotoPreviewBinding
@@ -111,24 +107,20 @@ internal class PhotoPreviewFragment : BasePhotoSelectorFragment<FragmentKelinPho
         override fun onBindViewHolder(holder: PhotoViewHolder, position: Int) {
             holder.vb.also { vb ->
                 val photo = photos[position]
-                Glide.with(vb.root.context)
-                    .load(photo.uri)
-                    .apply(RequestOptions.centerInsideTransform().error(R.drawable.kelin_photo_selector_img_load_error))
-                    .addListener(object : RequestListener<Drawable> {
-                        override fun onLoadFailed(e: GlideException?, model: Any?, target: Target<Drawable>?, isFirstResource: Boolean): Boolean {
-                            return false
-                        }
-
-                        override fun onResourceReady(resource: Drawable?, model: Any?, target: Target<Drawable>?, dataSource: DataSource?, isFirstResource: Boolean): Boolean {
+                vb.root.context.imageLoader.enqueue(
+                    ImageRequest.Builder(vb.root.context)
+                        .data(photo.uri)
+                        .error(R.drawable.kelin_photo_selector_img_load_error)
+                        .listener { _, _ ->
                             vb.ivKelinPhotoSelectorPlayVideo.visibility = if (photo.isVideo) {
                                 View.VISIBLE
                             } else {
                                 View.GONE
                             }
-                            return false
                         }
-                    })
-                    .into(vb.ptKelinPhotoSelectorPhotoTargetView.target)
+                        .target(vb.ptKelinPhotoSelectorPhotoTargetView.target)
+                        .build()
+                )
             }
         }
 

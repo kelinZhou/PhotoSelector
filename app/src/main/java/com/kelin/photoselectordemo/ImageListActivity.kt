@@ -9,9 +9,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
-import com.bumptech.glide.request.RequestOptions
+import coil.load
 import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.model.PhotoImpl
 import com.kelin.photoselectordemo.databinding.HolderImageBinding
@@ -58,11 +56,9 @@ class ImageListActivity : AppCompatActivity() {
                 override fun onBindViewHolder(holder: ImageHolder, position: Int) {
                     holder.vb.also { vb ->
                         val photo = photos[position]
-                        Glide.with(this@ImageListActivity)
-                            .load(photo.uri)
-                            .transition(DrawableTransitionOptions.withCrossFade())
-                            .apply(RequestOptions.centerCropTransform())
-                            .into(vb.ivPhoto)
+                        vb.ivPhoto.load(photo.uri){
+                            crossfade(true)
+                        }
                         vb.ivPlayVideo.visibility = if (photo.isVideo) {
                             View.VISIBLE
                         } else {

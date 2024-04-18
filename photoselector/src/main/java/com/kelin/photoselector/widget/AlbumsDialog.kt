@@ -7,8 +7,7 @@ import android.os.Bundle
 import android.view.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
-import com.bumptech.glide.request.RequestOptions
+import coil.load
 import com.kelin.photoselector.R
 import com.kelin.photoselector.databinding.HolderKelinPhotoSelectorAlbumBinding
 import com.kelin.photoselector.model.Album
@@ -40,10 +39,9 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
             override fun onBindViewHolder(holder: AlbumHolder, position: Int) {
                 holder.vb.also { vb ->
                     val album = albums[position]
-                    Glide.with(vb.root.context)
-                        .load(album.cover.path)
-                        .apply(RequestOptions().centerCrop().placeholder(R.drawable.image_placeholder))
-                        .into(vb.ivKelinPhotoSelectorPhotoView)
+                    vb.ivKelinPhotoSelectorPhotoView.load(album.cover.path){
+                        placeholder(R.drawable.image_placeholder)
+                    }
                     vb.tvKelinPhotoSelectorAlbumName.text = album.name
                     vb.tvKelinPhotoSelectorAlbumPath.text = album.path
                     vb.tvKelinPhotoSelectorCount.text = "共${album.pictures.size}个资源"

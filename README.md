@@ -27,6 +27,39 @@
 4.自动去重，自动回显已经选中了的图片或视频，防止选择相同的资源(默认支持:默认使用当前Activity或则Fragment的hashCode作为id,也可手动设置id，可手动设置关闭去重,id为-1即可)。
 
 ## 更新
+### [3.2.0] - 2024-4-18
+#### Added
+- Coil图片加载框架
+#### Removed
+- Glide图片加载框架
+#### Changed
+- 将Glide图片加载框架替换为Coil。
+- ImageLoader为Coil的核心，用户需要在初始化之前调用代码为Coil设置ImageLoader，例如`Coil.setImageLoader(imageLoader)`或`Coil.setImageLoader(imageLoaderFactory)`
+- 也可以直接让Application实现`ImageLoaderFactory`接口并重写`newImageLoader`方法，例如下面的代码：
+```kotlin
+class App : Application(), ImageLoaderFactory {
+    override fun onCreate() {
+        super.onCreate()
+       //初始化PhotoSelector。
+        PhotoSelector.init(this,"${packageName}.fileProvider", true, albumTakePictureEnable = false)
+    }
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .components {
+                //添加GIF支持
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+                    add(ImageDecoderDecoder.Factory())
+                } else {
+                    add(GifDecoder.Factory())
+                }
+                //添加视频加载为图片的支持
+                add(VideoFrameDecoder.Factory())
+            }
+            .build()
+    }
+}
+```
+
 ### [3.1.0] - 2024-1-12
 #### Added 
 - 适配Android13

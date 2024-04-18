@@ -11,9 +11,9 @@ import android.view.View
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import androidx.appcompat.widget.AppCompatImageView
-import com.bumptech.glide.load.resource.gif.GifDrawable
-import com.bumptech.glide.request.target.CustomViewTarget
-import com.bumptech.glide.request.transition.Transition
+import androidx.core.graphics.drawable.toBitmap
+import coil.drawable.ScaleDrawable
+import coil.target.Target
 import com.davemorrissey.labs.subscaleview.ImageSource
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
 import com.kelin.photoselector.databinding.ViewKelinPhotoSelectorPhotoTargetViewBinding
@@ -66,38 +66,29 @@ class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: Attribu
         vb.ivKelinPhotoSelectorGifView.setOnClickListener(l)
     }
 
-    inner class PhotoTarget(private val target: PhotoTargetView) : CustomViewTarget<PhotoTargetView, Drawable>(target) {
-        override fun onLoadFailed(errorDrawable: Drawable?) {
+    inner class PhotoTarget(private val target: PhotoTargetView) : Target {
+        override fun onError(error: Drawable?) {
             target.progressBar.visibility = View.GONE
             target.imageView.visibility = View.GONE
             target.defImageView.apply {
-                setImageDrawable(errorDrawable)
+                setImageDrawable(error)
                 visibility = View.VISIBLE
             }
         }
 
-        override fun onResourceCleared(placeholder: Drawable?) {
-            target.progressBar.visibility = View.VISIBLE
-            target.imageView.visibility = View.GONE
-            target.defImageView.apply {
-                setImageDrawable(placeholder)
-                visibility = View.VISIBLE
-            }
-        }
-
-        override fun onResourceReady(resource: Drawable, transition: Transition<in Drawable>?) {
+        override fun onSuccess(result: Drawable) {
             target.progressBar.visibility = View.GONE
-            if (resource is GifDrawable) {
+            if (result is ScaleDrawable) {
                 target.imageView.visibility = View.GONE
                 target.defImageView.apply {
-                    setImageDrawable(resource)
-                    resource.start()
+                    setImageDrawable(result)
+                    result.start()
                     visibility = View.VISIBLE
                 }
             } else {
                 target.defImageView.visibility = View.GONE
                 target.imageView.apply {
-                    setImage(ImageSource.bitmap(drawableToBitmap(resource)))
+                    setImage(ImageSource.bitmap(result.toBitmap()))
                     visibility = View.VISIBLE
                 }
             }
