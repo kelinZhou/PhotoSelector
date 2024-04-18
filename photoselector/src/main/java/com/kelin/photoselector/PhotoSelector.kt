@@ -1,6 +1,5 @@
 package com.kelin.photoselector
 
-import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
