@@ -7,6 +7,7 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.annotation.RequiresApi
 import com.kelin.okpermission.OkActivityResult
+import com.kelin.photoselector.PhotoSelector
 import com.kelin.photoselector.callback.BaseCallback
 import com.kelin.photoselector.callback.LeakProofCallback
 import com.kelin.photoselector.model.AlbumType
@@ -14,7 +15,8 @@ import com.kelin.photoselector.model.Photo
 import com.kelin.photoselector.model.toPhoto
 
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-internal class Android12SelectPictureCallbackFactory<R>(private val albumType: AlbumType, private val maxLength: Int) : CallbackFactory<R?> {
+internal class Android12SelectPictureCallbackFactory<R>(private val albumType: AlbumType, val id: Int, private val maxLength: Int) : CallbackFactory<R?> {
+
     override fun createCallback(): LeakProofCallback<R?> {
         return object : BaseCallback<R?>() {
             @Suppress("UNCHECKED_CAST")
@@ -49,7 +51,13 @@ internal class Android12SelectPictureCallbackFactory<R>(private val albumType: A
                                     }
                                 }
                             } else {
-                                callback(data.data.toPhoto(context, albumType == AlbumType.VIDEO) as? R)
+                                data.data.toPhoto(context, albumType == AlbumType.VIDEO).also { photo ->
+                                    if (id == PhotoSelector.ID_SINGLE) {
+                                        callback(photo as? R)
+                                    } else {
+                                        callback(photo?.let { listOf(it) } as? R)
+                                    }
+                                }
                             }
                         }
                     }

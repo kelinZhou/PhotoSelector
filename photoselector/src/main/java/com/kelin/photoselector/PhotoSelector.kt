@@ -452,7 +452,7 @@ object PhotoSelector {
         attachCallback(context, PermissionCallbackFactory(permissions)) { ctx, r ->
             if (r) {
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && useSys) {
-                    attachCallback(ctx, Android12SelectPictureCallbackFactory<R>(albumType, maxLength)) { _, photos ->
+                    attachCallback(ctx, Android12SelectPictureCallbackFactory<R>(albumType, id, maxLength)) { _, photos ->
                         result(photos)
                     }
                 } else {

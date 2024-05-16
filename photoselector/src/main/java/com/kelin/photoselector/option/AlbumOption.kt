@@ -35,7 +35,7 @@ open class SelectorAlbumOption internal constructor(
 
     /**
      * selectorId作为去重逻辑的依据，只有自定义相册才支持，系统相册不支持。
-     * 改参数只有调用select方法时maxLength大于1才有效。
+     * 该参数只有调用selectAll方法时maxLength大于1才有效。
      */
     var selectorId: Int = PhotoSelector.ID_REPEATABLE,
     /**
@@ -65,7 +65,7 @@ open class SelectorAlbumOption internal constructor(
  */
 @RequiresApi(Build.VERSION_CODES.TIRAMISU)
 fun SystemAlbumOption.select(callback: SinglePhotoCallback) {
-    PhotoSelector.realOpenSelector(context, permissions, true, album, 1, PhotoSelector.ID_REPEATABLE, 0F, 0, callback)
+    PhotoSelector.realOpenSelector(context, permissions, true, album, 1, PhotoSelector.ID_SINGLE, 0F, 0, callback)
 }
 
 /**
@@ -92,5 +92,5 @@ fun SelectorAlbumOption.select(callback: SinglePhotoCallback) {
  * @param callback 选择成功后的回调。
  */
 fun SelectorAlbumOption.selectAll(maxLength: Int = PhotoSelector.defMaxLength, callback: MutablePhotoCallabck) {
-    PhotoSelector.realOpenSelector(context, permissions, false, album, maxLength, if (maxLength == 1) PhotoSelector.ID_SINGLE else selectorId, maxSize, maxDuration, callback)
+    PhotoSelector.realOpenSelector(context, permissions, false, album, maxLength, if (maxLength == 1) PhotoSelector.ID_REPEATABLE else selectorId, maxSize, maxDuration, callback)
 }
