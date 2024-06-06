@@ -1,14 +1,19 @@
 package com.kelin.photoselector.ui
 
 import android.annotation.SuppressLint
+import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.database.Cursor
 import android.graphics.Color
 import android.media.MediaMetadataRetriever
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -24,12 +29,9 @@ import com.kelin.photoselector.R
 import com.kelin.photoselector.cache.DistinctManager
 import com.kelin.photoselector.databinding.FragmentKelinPhotoSelectorAlbumBinding
 import com.kelin.photoselector.databinding.HolderKelinPhotoSelectorPictureBinding
+import com.kelin.photoselector.loader.AlbumManager
 import com.kelin.photoselector.loader.AlbumPictureLoadCallback
 import com.kelin.photoselector.model.*
-import com.kelin.photoselector.model.Album
-import com.kelin.photoselector.model.AlbumType
-import com.kelin.photoselector.model.Picture
-import com.kelin.photoselector.model.PictureType
 import com.kelin.photoselector.utils.compressAndRotateByDegree
 import com.kelin.photoselector.utils.statusBarOffsetPx
 import com.kelin.photoselector.widget.AlbumsDialog
@@ -38,7 +40,6 @@ import java.io.File
 import java.io.Serializable
 import java.text.SimpleDateFormat
 import java.util.*
-import kotlin.collections.ArrayList
 
 /**
  * **描述:** 相册页面。
@@ -80,7 +81,8 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
         }
     }
 
-    val albumOffset: Int
+
+    private val albumOffset: Int
         get() = if (PhotoSelector.isAlbumTakePictureEnable) 1 else 0
 
     private val dataFormat by lazy { SimpleDateFormat("yyyy-MM-dd", Locale.CHINA) }
@@ -95,10 +97,6 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
 
     private val justSelectOne by lazy { selectorId == PhotoSelector.ID_SINGLE }
 
-    private var currentAlbumName: String = ""
-
-    private val albumsDialog by lazy { AlbumsDialog(requireActivity(), albums, currentAlbumName) { onAlbumSelected(it) } }
-
     private val message by lazy {
         when (albumType) {
             AlbumType.PHOTO -> getString(R.string.kelin_photo_selector_pictures)
@@ -111,6 +109,10 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
 
     private val maxLength by lazy { requireArguments().getInt(KEY_KELIN_PHOTO_SELECTOR_MAX_COUNT, PhotoSelector.defMaxLength) }
 
+    private val maxSize by lazy { requireArguments().getFloat(KEY_KELIN_PHOTO_SELECTOR_MAX_SIZE, 0F) }
+
+    private val maxDuration by lazy { requireArguments().getLong(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, 0) }
+
     private val isSingleSelector by lazy { maxLength == 1 }
 
     private val listAdapter by lazy {
@@ -119,10 +121,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
 
     private val listLayoutManager by lazy {
         object : GridLayoutManager(requireContext(), getSpanCount(isLandscape(resources.configuration))) {
-            override fun onLayoutChildren(
-                recycler: RecyclerView.Recycler?,
-                state: RecyclerView.State?
-            ) {
+            override fun onLayoutChildren(recycler: RecyclerView.Recycler?, state: RecyclerView.State?) {
                 try {
                     super.onLayoutChildren(recycler, state)
                 } catch (e: Exception) {
@@ -138,7 +137,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
         }
     }
 
-    private var albums = emptyList<Album>()
+    private val albumManager: AlbumManager by lazy { AlbumManager(requireActivity(), viewLifecycleOwner, sp, maxSize, maxDuration) }
 
     override fun generateViewBinding(inflater: LayoutInflater, container: ViewGroup?, attachToParent: Boolean): FragmentKelinPhotoSelectorAlbumBinding {
         return FragmentKelinPhotoSelectorAlbumBinding.inflate(inflater, container, attachToParent)
@@ -181,19 +180,15 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
                     }
                 })
             }
-            LoaderManager.getInstance(this@AlbumFragment).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext, requireArguments().getFloat(KEY_KELIN_PHOTO_SELECTOR_MAX_SIZE, 0F), requireArguments().getLong(KEY_KELIN_PHOTO_SELECTOR_MAX_DURATION, 0)) {
-                albums = it
-                val defAlbum = it.find { a -> a.name == sp.getString("kelin_photo_selector_selected_album_name", "") } ?: it.firstOrNull()
-                if (defAlbum == null) {
-                    Toast.makeText(applicationContext, "您的设备中没有任何${message}", Toast.LENGTH_SHORT).show()
-                } else {
-                    onAlbumSelected(defAlbum)
-                }
+
+            LoaderManager.getInstance(this@AlbumFragment).initLoader(albumType.type, null, AlbumPictureLoadCallback(applicationContext) { cursor ->
+                albumManager.parsePicture(cursor, this@AlbumFragment::onAlbumSelected, this@AlbumFragment::onAlbumMorePicture)
             })
+
             //关闭当前页面
             ivKelinPhotoSelectorFinish.setOnClickListener { finish() }
             //变更相册
-            rlKelinPhotoSelectorAlbumName.setOnClickListener { onSelectAlbums() }
+            rlKelinPhotoSelectorAlbumName.setOnClickListener { albumManager.onSelectAlbums() }
             //重新选择
             tvKelinPhotoSelectorReselect.setOnClickListener {
                 listAdapter.clearSelected()
@@ -248,16 +243,12 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
     private fun getSpanCount(landscape: Boolean): Int = if (landscape) 8 else 4
 
     private fun onAlbumSelected(album: Album) {
-        if (album.name != currentAlbumName) {
-            currentAlbumName = album.name
-            sp.edit().putString("kelin_photo_selector_selected_album_name", album.name).apply()
-            listAdapter.setPhotos(album.pictures)
-            vb.tvKelinPhotoSelectorAlbumName.text = album.name
-        }
+        listAdapter.setPhotos(album.pictures)
+        vb.tvKelinPhotoSelectorAlbumName.text = album.name
     }
 
-    private fun onSelectAlbums() {
-        albumsDialog.show()
+    private fun onAlbumMorePicture(pictures: List<Picture>) {
+        listAdapter.addAllPictures(pictures)
     }
 
     @SuppressLint("SetTextI18n")
@@ -327,6 +318,11 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacksAndMessages(null)
+    }
+
     private inner class PhotoListAdapter(private val initialSelected: List<Picture>?) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         init {
@@ -340,10 +336,10 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
         val selectedPictures: MutableList<Picture> = initialSelected?.toMutableList() ?: ArrayList()
 
         @SuppressLint("NotifyDataSetChanged")
-        fun setPhotos(photos: List<Picture>, refresh: Boolean = true) {
+        fun setPhotos(pictures: List<Picture>, refresh: Boolean = true) {
             photoList.run {
                 clear()
-                addAll(photos)
+                addAll(pictures)
             }
             if (refresh) {
                 notifyDataSetChanged()
@@ -355,6 +351,14 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
             onPictureSelectedChanged(picture, true)
             if (refresh) {
                 notifyItemInserted(1)
+            }
+        }
+
+        fun addAllPictures(pictures: List<Picture>, refresh: Boolean = true) {
+            val start = itemCount
+            photoList.addAll(pictures)
+            if (refresh) {
+                notifyItemRangeInserted(start, pictures.size)
             }
         }
 
@@ -437,7 +441,7 @@ internal class AlbumFragment : BasePhotoSelectorFragment<FragmentKelinPhotoSelec
         }
 
         fun bindData(data: Picture) {
-            vb.ivKelinPhotoSelectorPhotoView.load(data.uri){
+            vb.ivKelinPhotoSelectorPhotoView.load(data.uri) {
                 crossfade(true)
                 placeholder(R.drawable.image_placeholder)
             }

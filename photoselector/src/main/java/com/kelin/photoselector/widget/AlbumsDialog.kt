@@ -21,9 +21,11 @@ import com.kelin.photoselector.model.Album
  *
  * **版本:** v 1.0.0
  */
-internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, private val selectedAlbum: String, private val onAlbumSelected: (album: Album) -> Unit) : Dialog(ctx, R.style.KelinPhotoSelectorBottomAnimDialog) {
+internal class AlbumsDialog(ctx: Context, private val onAlbumSelected: (album: Album) -> Unit) : Dialog(ctx, R.style.KelinPhotoSelectorBottomAnimDialog) {
 
-    private var selectedPosition = albums.indexOfFirst { it.name == selectedAlbum }.let { if (it < 0) 0 else it }
+    private var selectedPosition = 0
+
+    private var albumsList:List<Album> = emptyList()
 
     private val listAdapter by lazy {
         object : RecyclerView.Adapter<AlbumHolder>() {
@@ -32,13 +34,13 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
             }
 
             override fun getItemCount(): Int {
-                return albums.size
+                return albumsList.size
             }
 
             @SuppressLint("SetTextI18n")
             override fun onBindViewHolder(holder: AlbumHolder, position: Int) {
                 holder.vb.also { vb ->
-                    val album = albums[position]
+                    val album = albumsList[position]
                     vb.ivKelinPhotoSelectorPhotoView.load(album.cover.path){
                         placeholder(R.drawable.image_placeholder)
                     }
@@ -74,6 +76,15 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
+    fun show(albums: List<Album>, selectedAlbum: String?) {
+        if (albums.isNotEmpty()) {
+            selectedPosition = albums.indexOfFirst { it.name == selectedAlbum }
+            albumsList = albums
+            listAdapter.notifyDataSetChanged()
+            super.show()
+        }
+    }
 
     private inner class AlbumHolder(val vb: HolderKelinPhotoSelectorAlbumBinding) : RecyclerView.ViewHolder(vb.root) {
         init {
@@ -84,7 +95,7 @@ internal class AlbumsDialog(ctx: Context, private val albums: List<Album>, priva
                     selectedPosition = layoutPosition
                     listAdapter.notifyItemChanged(old)
                     listAdapter.notifyItemChanged(selectedPosition)
-                    onAlbumSelected(albums[layoutPosition])
+                    onAlbumSelected(albumsList[layoutPosition])
                 }
                 itemView.post { dismiss() }
             }

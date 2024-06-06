@@ -21,7 +21,7 @@ internal data class Album(
     /**
      * 该相册内所有的图片或视频。
      */
-    val pictures: List<Picture>,
+    var pictures: MutableList<Picture>,
     /**
      * 相册的路径。
      */
