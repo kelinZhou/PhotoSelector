@@ -2,7 +2,6 @@ package com.kelin.photoselector.loader
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.Dialog
 import android.content.SharedPreferences
 import android.database.Cursor
 import android.media.MediaMetadataRetriever
@@ -128,71 +127,84 @@ internal class AlbumManager(activity: Activity, lifecycleOwner: LifecycleOwner, 
     @SuppressLint("SdCardPath", "Range")
     private fun innerParsePicture() {
         innerCursor?.run {
-            moveToFirst()
-            var result = ArrayList<Picture>()
-            var page = 0
-            do {
-                val path = getString(getColumnIndex(MediaStore.Files.FileColumns.DATA))
-                val name = getString(getColumnIndex(MediaStore.Files.FileColumns.DISPLAY_NAME))
-                val file = path.let { if (path.isNullOrEmpty()) null else File(path) }
-                val size = getLong(getColumnIndex(MediaStore.Files.FileColumns.SIZE))
-                val type = getInt(getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE)).let {
-                    if (it == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO) {
-                        PictureType.VIDEO
-                    } else {
-                        PictureType.PHOTO
-                    }
-                }
-                val isVideo = type == PictureType.VIDEO
-                val duration = if (isVideo) {
-                    getLong(getColumnIndex(MediaStore.Files.FileColumns.DURATION)).let {
-                        when {
-                            it > 0 -> it
-                            size >= 4096 -> { //但是视频太小的将会导致无法播放，所以这里过滤一下文件大小。
-                                //有些手机的有些视频可能从数据库查不到视频长度，如果长度是0则认为没有查到，那么就用下面的方式重新获取一次视频长度。
-                                MediaMetadataRetriever().let { m ->
-                                    m.setDataSource(path)
-                                    m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
-                                }
-                            }
-
-                            else -> 0
+            try {
+                moveToFirst()
+                var result = ArrayList<Picture>()
+                var page = 0
+                do {
+                    val path = getString(getColumnIndex(MediaStore.Files.FileColumns.DATA))
+                    val name = getString(getColumnIndex(MediaStore.Files.FileColumns.DISPLAY_NAME))
+                    val file = path.let { if (path.isNullOrEmpty()) null else File(path) }
+                    val size = getLong(getColumnIndex(MediaStore.Files.FileColumns.SIZE))
+                    val type = getInt(getColumnIndex(MediaStore.Files.FileColumns.MEDIA_TYPE)).let {
+                        if (it == MediaStore.Files.FileColumns.MEDIA_TYPE_VIDEO) {
+                            PictureType.VIDEO
+                        } else {
+                            PictureType.PHOTO
                         }
                     }
-                } else {
-                    0
-                }
-                if (file?.exists() == true && (!isVideo || size >= 4096)) {  //判断文件存在并且如果是视频则视频必须大于4kb(小于4kb的视频可能无法播放)
-                    val available = if (isVideo && maxDuration > 0) { //如果设置了最大时长并且是视频时则校验视频时长限制
-                        duration <= maxDuration  //视频时长小于限制时则认为是满足条件的视频。
-                    } else {  //在不需要校验视频时长限制时校验文件大小
-                        maxSize <= 0 || size.let { (it + 5000) / 10000 / 100F } <= maxSize  //没设置文件大小或则文件大小符合要求时则认为是满足条件的图片。
-                    }
-                    if (available) {
-                        //如果满足条件则被添加到结果中，否则不添加
-                        result.add(
-                            Picture(
-                                file.absolutePath,
-                                size,
-                                type,
-                                if (isVideo) duration.formatToDurationString() else "",
-                                dataFormat.format(getLong(getColumnIndex(MediaStore.Files.FileColumns.DATE_MODIFIED)) * 1000)
-                            )
-                        )
+                    val isVideo = type == PictureType.VIDEO
+                    val duration = if (isVideo) {
+                        getLong(getColumnIndex(MediaStore.Files.FileColumns.DURATION)).let {
+                            when {
+                                it > 0 -> it
+                                size >= 4096 -> { //但是视频太小的将会导致无法播放，所以这里过滤一下文件大小。
+                                    //有些手机的有些视频可能从数据库查不到视频长度，如果长度是0则认为没有查到，那么就用下面的方式重新获取一次视频长度。
+                                    MediaMetadataRetriever().let { m ->
+                                        m.setDataSource(path)
+                                        m.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 1
+                                    }
+                                }
+
+                                else -> 0
+                            }
+                        }
                     } else {
-                        Log.d("PhotoSelector:", "过滤过大的或过长的图片视频：path=$path, name=$name, maxSize=${size / 1000000F}MB, duration=${duration.formatToDurationString()}")
+                        0
                     }
-                } else {
-                    Log.d("PhotoSelector:", "照片或视频读取失败：path=$path, name=$name")
-                }
-                if (result.size >= 1000) {
-                    parseAlbum(page, result)
-                    result = ArrayList()
-                    page++
-                }
-            } while (onAlbumMorePicturesListener != null && moveToNext())
-            close()
-            parseAlbum(page, result)
+                    if (file?.exists() == true && (!isVideo || size >= 4096)) {  //判断文件存在并且如果是视频则视频必须大于4kb(小于4kb的视频可能无法播放)
+                        val available = if (isVideo && maxDuration > 0) { //如果设置了最大时长并且是视频时则校验视频时长限制
+                            duration <= maxDuration  //视频时长小于限制时则认为是满足条件的视频。
+                        } else {  //在不需要校验视频时长限制时校验文件大小
+                            maxSize <= 0 || size.let { (it + 5000) / 10000 / 100F } <= maxSize  //没设置文件大小或则文件大小符合要求时则认为是满足条件的图片。
+                        }
+                        if (available) {
+                            val date = try {
+                                getLong(getColumnIndex(MediaStore.Files.FileColumns.DATE_MODIFIED))
+                            } catch (e: Exception) {
+                                getLong(getColumnIndex(MediaStore.Files.FileColumns.DATE_ADDED))
+                            }.let { it * 1000 }
+                            //如果满足条件则被添加到结果中，否则不添加
+                            if (date > 0) {
+                                result.add(
+                                    Picture(
+                                        file.absolutePath,
+                                        size,
+                                        type,
+                                        if (isVideo) duration.formatToDurationString() else "",
+                                        dataFormat.format(date)
+                                    )
+                                )
+                            } else {
+                                Log.e("PhotoSelector:", "获取图片或视频的日期失败：path=$path, name=$name, maxSize=${size / 1000000F}MB, duration=${duration.formatToDurationString()},date=${date}")
+                            }
+                        } else {
+                            Log.d("PhotoSelector:", "过滤过大的或过长的图片视频：path=$path, name=$name, maxSize=${size / 1000000F}MB, duration=${duration.formatToDurationString()}")
+                        }
+                    } else {
+                        Log.d("PhotoSelector:", "照片或视频读取失败：path=$path, name=$name")
+                    }
+                    if (result.size >= 1000) {
+                        parseAlbum(page, result)
+                        result = ArrayList()
+                        page++
+                    }
+                } while (innerCursor?.takeIf { !it.isClosed } != null && moveToNext())
+                close()
+                parseAlbum(page, result)
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -264,6 +276,12 @@ internal class AlbumManager(activity: Activity, lifecycleOwner: LifecycleOwner, 
 
     override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
         if (event == Lifecycle.Event.ON_DESTROY) {
+            innerCursor?.run {
+                if (!isClosed) {
+                    close()
+                }
+            }
+            innerCursor = null
             albumsDialog?.run {
                 if (isShowing) {
                     dismiss()

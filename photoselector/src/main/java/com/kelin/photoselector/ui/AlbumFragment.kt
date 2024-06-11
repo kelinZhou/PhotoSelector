@@ -1,19 +1,14 @@
 package com.kelin.photoselector.ui
 
 import android.annotation.SuppressLint
-import android.content.ContentResolver
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
-import android.database.Cursor
 import android.graphics.Color
 import android.media.MediaMetadataRetriever
-import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.provider.MediaStore
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -34,7 +29,6 @@ import com.kelin.photoselector.loader.AlbumPictureLoadCallback
 import com.kelin.photoselector.model.*
 import com.kelin.photoselector.utils.compressAndRotateByDegree
 import com.kelin.photoselector.utils.statusBarOffsetPx
-import com.kelin.photoselector.widget.AlbumsDialog
 import com.kelin.photoselector.widget.ProgressDialog
 import java.io.File
 import java.io.Serializable

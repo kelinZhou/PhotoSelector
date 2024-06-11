@@ -18,6 +18,7 @@ internal enum class PictureType(val type: Int) : Parcelable {
      * 图片。
      */
     PHOTO(0x01),
+
     /**
      * 视频。
      */
@@ -34,7 +35,7 @@ internal enum class PictureType(val type: Int) : Parcelable {
     companion object CREATOR : Parcelable.Creator<PictureType> {
         override fun createFromParcel(parcel: Parcel): PictureType {
             val type = parcel.readInt()
-            values().forEach {
+            entries.forEach {
                 if (it.type == type) {
                     return it
                 }
