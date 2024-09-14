@@ -53,9 +53,11 @@ dependencies {
     api "io.coil-kt:coil-video:$coil_version"
 
     //大图预览组件
-    implementation 'com.davemorrissey.labs:subsampling-scale-image-view-androidx:3.10.0'
+//    implementation 'com.davemorrissey.labs:subsampling-scale-image-view-androidx:3.10.0'
+    implementation 'com.github.chrisbanes:PhotoView:2.3.0'
+    implementation 'androidx.exifinterface:exifinterface:1.3.7'
     //6.0以上的动态权限处理
-    implementation 'com.github.kelinZhou:OkPermission:3.4.3'
+    implementation 'com.github.kelinZhou:OkPermission:3.4.5'
     //ViewPager2
     implementation "androidx.viewpager2:viewpager2:1.0.0"
     //ExoPlayer视频播放器
@@ -67,39 +69,3 @@ dependencies {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = "UTF-8"
 }
-
-//// 打包源码
-//tasks.register('sourcesJar', Jar) {
-//    dependsOn build
-//    from android.sourceSets.main.java.srcDirs
-//    archiveClassifier.convention('sources')
-//    archiveClassifier.set('sources')
-//}
-//
-//tasks.register('javadoc', Javadoc) {
-//    dependsOn build
-//    failOnError false
-//    source = android.sourceSets.main.java.sourceFiles
-//    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-////    classpath += configurations.compile
-//}
-//
-//// 制作文档(Javadoc)
-//tasks.register('javadocJar', Jar) {
-//    dependsOn javadoc
-//    archiveClassifier.convention('sources')
-//    archiveClassifier.set('sources')
-//    from javadoc.getDestinationDir()
-//}
-//
-//afterEvaluate{
-//    artifacts {
-//        archives sourcesJar
-//        archives javadocJar
-//    }
-//}
-//
-//artifacts {
-//    archives sourcesJar
-//    archives javadocJar
-//}

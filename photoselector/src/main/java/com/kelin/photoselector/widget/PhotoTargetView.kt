@@ -1,21 +1,19 @@
 package com.kelin.photoselector.widget
 
 import android.content.Context
-import android.graphics.Bitmap
-import android.graphics.Canvas
-import android.graphics.PixelFormat
 import android.graphics.drawable.Drawable
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import androidx.appcompat.widget.AppCompatImageView
-import androidx.core.graphics.drawable.toBitmap
 import coil.drawable.ScaleDrawable
 import coil.target.Target
-import com.davemorrissey.labs.subscaleview.ImageSource
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+import com.github.chrisbanes.photoview.PhotoView
 import com.kelin.photoselector.databinding.ViewKelinPhotoSelectorPhotoTargetViewBinding
 
 /**
@@ -31,11 +29,22 @@ class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: Attribu
 
     private val vb by lazy { ViewKelinPhotoSelectorPhotoTargetViewBinding.inflate(LayoutInflater.from(context), this, false) }
 
+    private val handler by lazy { object: Handler(Looper.getMainLooper()){
+        override fun handleMessage(msg: Message) {
+            if (msg.what == 0x0100_0001) {
+                lastTap = 0
+                onClickListener?.onClick(this@PhotoTargetView)
+            }
+        }
+    } }
+
+    private var onClickListener: OnClickListener? = null
+
     init {
         addView(vb.root)
     }
 
-    internal val imageView: SubsamplingScaleImageView by lazy { vb.ivKelinPhotoSelectorPhotoView }
+    internal val imageView: PhotoView by lazy { vb.ivKelinPhotoSelectorPhotoView }
 
     internal val defImageView: AppCompatImageView by lazy { vb.ivKelinPhotoSelectorGifView }
 
@@ -43,27 +52,31 @@ class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: Attribu
 
     val target by lazy { PhotoTarget(this) }
 
-    private fun drawableToBitmap(drawable: Drawable): Bitmap {
-
-        // 获取 drawable 长宽
-        val width = drawable.intrinsicWidth
-        val height = drawable.intrinsicHeight
-
-        drawable.setBounds(0, 0, width, height)
-        // 获取drawable的颜色格式
-        val config = if (drawable.opacity != PixelFormat.OPAQUE) Bitmap.Config.ARGB_8888 else Bitmap.Config.RGB_565
-        // 创建bitmap
-        val bitmap = Bitmap.createBitmap(width, height, config)
-        // 创建bitmap画布
-        val canvas = Canvas(bitmap)
-        // 将drawable 内容画到画布中
-        drawable.draw(canvas)
-        return bitmap
-    }
+    private var lastTap:Long = 0
 
     override fun setOnClickListener(l: OnClickListener?) {
-        vb.ivKelinPhotoSelectorPhotoView.setOnClickListener(l)
-        vb.ivKelinPhotoSelectorGifView.setOnClickListener(l)
+        onClickListener = l
+        vb.ivKelinPhotoSelectorPhotoView.setOnClickListener {
+            onClickListener?.onClick(this)
+        }
+        vb.ivKelinPhotoSelectorGifView.setOnClickListener {
+            if (lastTap == 0L) {
+                lastTap = System.currentTimeMillis()
+                handler.sendMessageDelayed(Message.obtain(handler, 0x0100_0001), 500)
+            }else if (System.currentTimeMillis() - lastTap > 500) {
+                lastTap = 0
+                onClickListener?.onClick(this)
+            }else{
+                lastTap = 0
+                handler.removeMessages(0x0100_0001)
+                // onDoubleClick  //普通图片不支持双击
+            }
+        }
+    }
+
+    override fun onDetachedFromWindow() {
+        super.onDetachedFromWindow()
+        handler.removeCallbacksAndMessages(null)
     }
 
     inner class PhotoTarget(private val target: PhotoTargetView) : Target {
@@ -88,7 +101,7 @@ class PhotoTargetView @JvmOverloads constructor(context: Context, attrs: Attribu
             } else {
                 target.defImageView.visibility = View.GONE
                 target.imageView.apply {
-                    setImage(ImageSource.bitmap(result.toBitmap()))
+                    setImageDrawable(result)
                     visibility = View.VISIBLE
                 }
             }

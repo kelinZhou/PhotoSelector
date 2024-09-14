@@ -72,7 +72,7 @@ class MainActivity : AppCompatActivity() {
 
         vb.btnPhotoSelect.setOnClickListener {
             PhotoSelector.withSelectorAlbum(this, AlbumType.PHOTO) {
-                selectAll(6) { photos ->
+                selectAll(20) { photos ->
                     if (photos.isNullOrEmpty()) {
                         Toast.makeText(this@MainActivity, "选择已被取消", Toast.LENGTH_SHORT).show()
                     } else {
